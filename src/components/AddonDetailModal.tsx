@@ -30,7 +30,7 @@ import { Addon, Comment } from "../types";
 interface AddonDetailModalProps {
   addon: Addon;
   onClose: () => void;
-  onDownload: (addon: Addon) => void;
+  onDownload: (addon: Addon) => any;
   onAddComment: (addonId: string, username: string, text: string) => Promise<Comment | null>;
   isAdminVerified?: boolean;
   onEditAddon?: (addonId: string, updatedFields: any) => Promise<boolean>;
@@ -75,6 +75,18 @@ export default function AddonDetailModal({
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [editErrorMsg, setEditErrorMsg] = useState("");
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownloadClick = async () => {
+    setIsDownloading(true);
+    try {
+      await onDownload(addon);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   const editCoverInputRef = useRef<HTMLInputElement>(null);
   const editFileInputRef = useRef<HTMLInputElement>(null);
@@ -584,18 +596,24 @@ export default function AddonDetailModal({
 
                   {/* Right Download Controls */}
                   <div className="flex flex-col gap-2 min-w-[200px]">
-                    <a
+                    <button
                       id={`modal-download-btn-${addon.id}`}
-                      href={addon.fileUrl}
-                      download={addon.fileName}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={() => onDownload(addon)}
-                      className="w-full inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-slate-950 font-bold px-5 py-3 rounded-xl shadow-lg shadow-emerald-500/10 transition-all cursor-pointer text-center select-none"
+                      onClick={handleDownloadClick}
+                      disabled={isDownloading}
+                      className="w-full inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 disabled:bg-emerald-800 disabled:text-slate-700 disabled:cursor-not-allowed text-slate-950 font-bold px-5 py-3 rounded-xl shadow-lg shadow-emerald-500/10 transition-all cursor-pointer text-center select-none"
                     >
-                      <Download size={18} className="animate-bounce" />
-                      Unduh Langsung
-                    </a>
+                      {isDownloading ? (
+                        <>
+                          <Loader2 size={18} className="animate-spin" />
+                          Mengunduh...
+                        </>
+                      ) : (
+                        <>
+                          <Download size={18} className="animate-bounce" />
+                          Unduh Langsung
+                        </>
+                      )}
+                    </button>
                     <div className="flex items-center justify-center gap-1.5 text-[10px] text-emerald-400 font-bold font-mono">
                       <ShieldCheck size={12} />
                       100% AMAN • BEBAS IKLAN

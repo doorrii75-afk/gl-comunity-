@@ -83,7 +83,7 @@ export default function App() {
   }, []);
 
   // Handle direct download counter and save
-  const handleDownload = (addon: Addon) => {
+  const handleDownload = async (addon: Addon): Promise<void> => {
     // Optimistically increment count on client-side state
     setAddons((prev) =>
       prev.map((a) => {
@@ -97,6 +97,28 @@ export default function App() {
         return a;
       })
     );
+
+    // Perform robust blob fetch and trigger direct browser download inside sandbox iframe
+    try {
+      const response = await fetch(addon.fileUrl);
+      if (!response.ok) {
+        const errorMsg = await response.text();
+        throw new Error(errorMsg || "Gagal mengunduh file.");
+      }
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = addon.fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    } catch (err: any) {
+      console.error("Error downloading file:", err);
+      alert("Gagal mengunduh berkas add-on: " + err.message);
+      throw err;
+    }
   };
 
   // Handle comment submit
@@ -139,6 +161,14 @@ export default function App() {
 
   // Handle deleting an addon
   const handleDeleteAddon = async (addonId: string): Promise<void> => {
+    // 1. Save original state for backup
+    const originalAddons = [...addons];
+    const originalSelected = selectedAddon;
+
+    // 2. Optimistically remove from state and close modal instantly
+    setAddons((prev) => prev.filter((a) => a.id !== addonId));
+    setSelectedAddon(null);
+
     try {
       const response = await fetch(`/api/addons/${addonId}`, {
         method: "DELETE"
@@ -146,10 +176,12 @@ export default function App() {
       if (!response.ok) {
         throw new Error("Gagal menghapus add-on dari server database.");
       }
-      setAddons((prev) => prev.filter((a) => a.id !== addonId));
-      setSelectedAddon(null);
     } catch (err: any) {
       console.error(err);
+      // Revert state on error
+      setAddons(originalAddons);
+      setSelectedAddon(originalSelected);
+      alert(err.message || "Gagal menghapus add-on. Silakan coba lagi.");
       throw new Error(err.message || "Gagal menghapus.");
     }
   };

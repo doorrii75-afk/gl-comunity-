@@ -50,150 +50,208 @@ function generateSvgCoverBase64(title: string, color: string): string {
   return `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
 }
 
+const DEFAULT_ADDONS = [
+  {
+    id: "addon-1",
+    name: "More Ores & Armor Ultimate",
+    description: "Menambahkan lebih dari 15 jenis bijih tambang baru di bawah tanah Minecraft! Mulai dari Ruby, Sapphire, Amethyst, Cobalt, hingga Vibranium kuno. Setiap bijih dapat ditempa menjadi set armor lengkap dan peralatan perang (pedang, kapak, beliung) dengan efek pasif unik seperti ketahanan api, kecepatan gerak, atau penglihatan malam.",
+    category: "Survival",
+    compatibleVersion: "1.21.x - 1.22.x",
+    coverUrl: "/api/addons/addon-1/cover",
+    fileUrl: "/api/addons/addon-1/download",
+    fileName: "more_ores_ultimate.mcaddon",
+    fileSize: "4.2 MB",
+    downloads: 1450,
+    comments: [
+      {
+        id: "c1-1",
+        username: "StevePro",
+        text: "Addon ini keren banget! Akhirnya grinding mining jadi seru lagi karena banyak mineral baru.",
+        createdAt: "2026-07-08T14:30:00Z"
+      },
+      {
+        id: "c1-2",
+        username: "AlexMinecraft",
+        text: "Apakah armor Vibranium benar-benar kebal dari ledakan Creeper? Udah nyoba dan gila kuat banget!",
+        createdAt: "2026-07-09T09:15:00Z"
+      }
+    ],
+    createdAt: "2026-07-01T12:00:00Z",
+    author: "GL Admin",
+    color: "#3b82f6"
+  },
+  {
+    id: "addon-2",
+    name: "Modern Furniture DecoCraft",
+    description: "Hiasi rumah modern impianmu dengan ratusan furnitur interaktif! Dilengkapi kulkas fungsional yang bisa menyimpan makanan, sofa empuk untuk bersantai, TV LED yang bisa dinyalakan, lampu tidur dengan tingkat kecerahan dinamis, hingga set wastafel dan toilet modern. Sangat cocok untuk pemain kreatif maupun survival dekoratif.",
+    category: "Kreatif",
+    compatibleVersion: "1.20.x - 1.21.x",
+    coverUrl: "/api/addons/addon-2/cover",
+    fileUrl: "/api/addons/addon-2/download",
+    fileName: "modern_furniture_deco.mcaddon",
+    fileSize: "8.7 MB",
+    downloads: 2890,
+    comments: [
+      {
+        id: "c2-1",
+        username: "BuilderCraft",
+        text: "Akhirnya bisa bikin ruang tamu yang kelihatan mewah! Sofa birunya mantap.",
+        createdAt: "2026-07-07T11:20:00Z"
+      }
+    ],
+    createdAt: "2026-07-03T10:00:00Z",
+    author: "GL Admin",
+    color: "#ec4899"
+  },
+  {
+    id: "addon-3",
+    name: "Advanced Super Vehicles Pack",
+    description: "Kendarai kendaraan berkecepatan tinggi di dunia kotak-kokakmu! Paket ini menghadirkan mobil sport mewah, helikopter tempur, sepeda motor trail, jet ski, dan truk tangki air. Semua kendaraan memiliki animasi roda berputar, speedometer di HUD, bagasi penyimpanan terintegrasi, dan membutuhkan bahan bakar batu bara atau bensin.",
+    category: "Transportasi",
+    compatibleVersion: "1.21.x",
+    coverUrl: "/api/addons/addon-3/cover",
+    fileUrl: "/api/addons/addon-3/download",
+    fileName: "super_vehicles_pack.mcaddon",
+    fileSize: "12.4 MB",
+    downloads: 3200,
+    comments: [
+      {
+        id: "c3-1",
+        username: "RacerX",
+        text: "Kecepatan mobil sportnya luar biasa! Tapi helikopternya agak susah dikendalikan di HP.",
+        createdAt: "2026-07-08T18:45:00Z"
+      }
+    ],
+    createdAt: "2026-07-04T08:30:00Z",
+    author: "GL Admin",
+    color: "#f59e0b"
+  },
+  {
+    id: "addon-4",
+    name: "Fantasy Mythical Creatures",
+    description: "Dunia Minecraft-mu sekarang dihuni oleh makhluk-makhluk mitologi legendaris! Temui naga api di gunung berapi, Pegasus terbang tinggi di langit savana, peri hutan yang ramah di biome bunga, hingga Minotaur raksasa yang menjaga labirin bawah tanah. Beberapa makhluk dapat dijinakkan dan dijadikan tunggangan tempur!",
+    category: "Petualangan",
+    compatibleVersion: "1.20.x - 1.22.x",
+    coverUrl: "/api/addons/addon-4/cover",
+    fileUrl: "/api/addons/addon-4/download",
+    fileName: "mythical_creatures.mcaddon",
+    fileSize: "15.1 MB",
+    downloads: 1980,
+    comments: [],
+    createdAt: "2026-07-05T15:10:00Z",
+    author: "GL Admin",
+    color: "#10b981"
+  },
+  {
+    id: "addon-5",
+    name: "Waypoints & Dynamic Minimap HUD",
+    description: "Alat navigasi esensial untuk para petualang sejati! Addon ini menambahkan HUD minimap melingkar di sudut layar yang mendeteksi musuh di sekitar secara real-time. Kamu juga bisa membuat kustom waypoint (titik penanda) dengan warna berbeda, dan melakukan teleportasi langsung ke koordinat tersebut melalui menu GUI kompas khusus.",
+    category: "Alat (Tools)",
+    compatibleVersion: "1.19.x - 1.21.x",
+    coverUrl: "/api/addons/addon-5/cover",
+    fileUrl: "/api/addons/addon-5/download",
+    fileName: "waypoints_minimap.mcaddon",
+    fileSize: "1.8 MB",
+    downloads: 4120,
+    comments: [
+      {
+        id: "c5-1",
+        username: "ExplorerNoob",
+        text: "Sangat membantu biar gak tersesat pas nyari Nether Fortress! Fitur teleportasinya juara.",
+        createdAt: "2026-07-09T03:40:00Z"
+      }
+    ],
+    createdAt: "2026-07-06T09:00:00Z",
+    author: "GL Admin",
+    color: "#8b5cf6"
+  }
+];
+
+const LOCAL_DB_PATH = path.join(process.cwd(), "addons_local.json");
+
+interface LocalAddon extends Addon {
+  coverBase64?: string;
+  chunks?: { [key: string]: string };
+}
+
+let localAddons: { [id: string]: LocalAddon } = {};
+
+function saveLocalDb() {
+  try {
+    fs.writeFileSync(LOCAL_DB_PATH, JSON.stringify(localAddons, null, 2), "utf-8");
+  } catch (err: any) {
+    console.error("Gagal menyimpan local DB fallback:", err.message);
+  }
+}
+
+function seedLocalDbDefaults() {
+  localAddons = {};
+  for (const item of DEFAULT_ADDONS) {
+    const coverBase64 = generateSvgCoverBase64(item.name, item.color);
+    const { color, ...addonData } = item;
+    
+    const dummyData = `// GL COM Minecraft Add-on File\n// Name: ${item.name}\n// Direct download without ads!\n// ID: ${item.id}`;
+    
+    localAddons[item.id] = {
+      ...addonData,
+      coverBase64,
+      chunks: {
+        "chunk-0": Buffer.from(dummyData).toString("base64")
+      }
+    };
+  }
+  saveLocalDb();
+  console.log("Local DB fallback berhasil diseed dengan default.");
+}
+
+function loadLocalDb() {
+  try {
+    if (fs.existsSync(LOCAL_DB_PATH)) {
+      localAddons = JSON.parse(fs.readFileSync(LOCAL_DB_PATH, "utf-8"));
+      console.log(`Loaded ${Object.keys(localAddons).length} addons from local fallback DB.`);
+    } else {
+      seedLocalDbDefaults();
+    }
+  } catch (err: any) {
+    console.error("Gagal membaca local DB fallback, membuat ulang:", err.message);
+    seedLocalDbDefaults();
+  }
+}
+
+// Load local database
+loadLocalDb();
+
 async function seedDatabaseIfEmpty() {
   if (!db) return;
   try {
-    const addonsRef = collection(db, "addons");
-    const querySnap = await getDocs(addonsRef);
-    if (querySnap.empty) {
-      console.log("Database is empty, seeding default addons...");
-      const DEFAULT_ADDONS = [
-        {
-          id: "addon-1",
-          name: "More Ores & Armor Ultimate",
-          description: "Menambahkan lebih dari 15 jenis bijih tambang baru di bawah tanah Minecraft! Mulai dari Ruby, Sapphire, Amethyst, Cobalt, hingga Vibranium kuno. Setiap bijih dapat ditempa menjadi set armor lengkap dan peralatan perang (pedang, kapak, beliung) dengan efek pasif unik seperti ketahanan api, kecepatan gerak, atau penglihatan malam.",
-          category: "Survival",
-          compatibleVersion: "1.21.x - 1.22.x",
-          coverUrl: "/api/addons/addon-1/cover",
-          fileUrl: "/api/addons/addon-1/download",
-          fileName: "more_ores_ultimate.mcaddon",
-          fileSize: "4.2 MB",
-          downloads: 1450,
-          comments: [
-            {
-              id: "c1-1",
-              username: "StevePro",
-              text: "Addon ini keren banget! Akhirnya grinding mining jadi seru lagi karena banyak mineral baru.",
-              createdAt: "2026-07-08T14:30:00Z"
-            },
-            {
-              id: "c1-2",
-              username: "AlexMinecraft",
-              text: "Apakah armor Vibranium benar-benar kebal dari ledakan Creeper? Udah nyoba dan gila kuat banget!",
-              createdAt: "2026-07-09T09:15:00Z"
-            }
-          ],
-          createdAt: "2026-07-01T12:00:00Z",
-          author: "GL Admin",
-          color: "#3b82f6"
-        },
-        {
-          id: "addon-2",
-          name: "Modern Furniture DecoCraft",
-          description: "Hiasi rumah modern impianmu dengan ratusan furnitur interaktif! Dilengkapi kulkas fungsional yang bisa menyimpan makanan, sofa empuk untuk bersantai, TV LED yang bisa dinyalakan, lampu tidur dengan tingkat kecerahan dinamis, hingga set wastafel dan toilet modern. Sangat cocok untuk pemain kreatif maupun survival dekoratif.",
-          category: "Kreatif",
-          compatibleVersion: "1.20.x - 1.21.x",
-          coverUrl: "/api/addons/addon-2/cover",
-          fileUrl: "/api/addons/addon-2/download",
-          fileName: "modern_furniture_deco.mcaddon",
-          fileSize: "8.7 MB",
-          downloads: 2890,
-          comments: [
-            {
-              id: "c2-1",
-              username: "BuilderCraft",
-              text: "Akhirnya bisa bikin ruang tamu yang kelihatan mewah! Sofa birunya mantap.",
-              createdAt: "2026-07-07T11:20:00Z"
-            }
-          ],
-          createdAt: "2026-07-03T10:00:00Z",
-          author: "GL Admin",
-          color: "#ec4899"
-        },
-        {
-          id: "addon-3",
-          name: "Advanced Super Vehicles Pack",
-          description: "Kendarai kendaraan berkecepatan tinggi di dunia kotak-kotakmu! Paket ini menghadirkan mobil sport mewah, helikopter tempur, sepeda motor trail, jet ski, dan truk tangki air. Semua kendaraan memiliki animasi roda berputar, speedometer di HUD, bagasi penyimpanan terintegrasi, dan membutuhkan bahan bakar batu bara atau bensin.",
-          category: "Transportasi",
-          compatibleVersion: "1.21.x",
-          coverUrl: "/api/addons/addon-3/cover",
-          fileUrl: "/api/addons/addon-3/download",
-          fileName: "super_vehicles_pack.mcaddon",
-          fileSize: "12.4 MB",
-          downloads: 3200,
-          comments: [
-            {
-              id: "c3-1",
-              username: "RacerX",
-              text: "Kecepatan mobil sportnya luar biasa! Tapi helikopternya agak susah dikendalikan di HP.",
-              createdAt: "2026-07-08T18:45:00Z"
-            }
-          ],
-          createdAt: "2026-07-04T08:30:00Z",
-          author: "GL Admin",
-          color: "#f59e0b"
-        },
-        {
-          id: "addon-4",
-          name: "Fantasy Mythical Creatures",
-          description: "Dunia Minecraft-mu sekarang dihuni oleh makhluk-makhluk mitologi legendaris! Temui naga api di gunung berapi, Pegasus terbang tinggi di langit savana, peri hutan yang ramah di biome bunga, hingga Minotaur raksasa yang menjaga labirin bawah tanah. Beberapa makhluk dapat dijinakkan dan dijadikan tunggangan tempur!",
-          category: "Petualangan",
-          compatibleVersion: "1.20.x - 1.22.x",
-          coverUrl: "/api/addons/addon-4/cover",
-          fileUrl: "/api/addons/addon-4/download",
-          fileName: "mythical_creatures.mcaddon",
-          fileSize: "15.1 MB",
-          downloads: 1980,
-          comments: [],
-          createdAt: "2026-07-05T15:10:00Z",
-          author: "GL Admin",
-          color: "#10b981"
-        },
-        {
-          id: "addon-5",
-          name: "Waypoints & Dynamic Minimap HUD",
-          description: "Alat navigasi esensial untuk para petualang sejati! Addon ini menambahkan HUD minimap melingkar di sudut layar yang mendeteksi musuh di sekitar secara real-time. Kamu juga bisa membuat kustom waypoint (titik penanda) dengan warna berbeda, dan melakukan teleportasi langsung ke koordinat tersebut melalui menu GUI kompas khusus.",
-          category: "Alat (Tools)",
-          compatibleVersion: "1.19.x - 1.21.x",
-          coverUrl: "/api/addons/addon-5/cover",
-          fileUrl: "/api/addons/addon-5/download",
-          fileName: "waypoints_minimap.mcaddon",
-          fileSize: "1.8 MB",
-          downloads: 4120,
-          comments: [
-            {
-              id: "c5-1",
-              username: "ExplorerNoob",
-              text: "Sangat membantu biar gak tersesat pas nyari Nether Fortress! Fitur teleportasinya juara.",
-              createdAt: "2026-07-09T03:40:00Z"
-            }
-          ],
-          createdAt: "2026-07-06T09:00:00Z",
-          author: "GL Admin",
-          color: "#8b5cf6"
-        }
-      ];
+    for (const item of DEFAULT_ADDONS) {
+      const docRef = doc(db, "addons", item.id);
+      const docSnap = await getDoc(docRef);
 
-      for (const item of DEFAULT_ADDONS) {
-        const docRef = doc(db, "addons", item.id);
+      if (!docSnap.exists()) {
+        console.log(`Seeding metadata for missing addon: ${item.name}`);
         const coverBase64 = generateSvgCoverBase64(item.name, item.color);
         const { color, ...addonData } = item;
         await setDoc(docRef, {
           ...addonData,
           coverBase64
         });
+      }
 
+      const chunkRef = doc(db, "addons", item.id, "chunks", "chunk-0");
+      const chunkSnap = await getDoc(chunkRef);
+      if (!chunkSnap.exists()) {
+        console.log(`Seeding missing file chunk for addon: ${item.name}`);
         const dummyData = `// GL COM Minecraft Add-on File\n// Name: ${item.name}\n// Direct download without ads!\n// ID: ${item.id}`;
-        const chunkRef = doc(db, "addons", item.id, "chunks", "chunk-0");
         await setDoc(chunkRef, {
           index: 0,
           data: Buffer.from(dummyData).toString("base64")
         });
       }
-      console.log("Seeding completed successfully.");
     }
-  } catch (err) {
-    console.error("Error seeding database:", err);
+    console.log("Database seed validation and repair completed.");
+  } catch (err: any) {
+    console.warn("Gagal seeding database Firestore (kemungkinan besar karena batas kuota):", err.message);
   }
 }
 
@@ -204,146 +262,191 @@ if (fs.existsSync(firebaseConfigPath)) {
     db = getFirestore(firebaseApp, firebaseConfig.firestoreDatabaseId);
     console.log("Firebase initialized successfully on server. DB ID:", firebaseConfig.firestoreDatabaseId);
     seedDatabaseIfEmpty();
-  } catch (err) {
-    console.error("Error initializing Firebase:", err);
+  } catch (err: any) {
+    console.error("Error initializing Firebase:", err.message);
   }
+}
+
+// Helper to format/send cover response
+function sendCoverResponse(res: any, coverBase64: string) {
+  const matches = coverBase64.match(/^data:image\/([A-Za-z-+]+);base64,(.+)$/);
+  let buffer: Buffer;
+  let contentType = "image/png";
+
+  if (matches && matches.length === 3) {
+    contentType = `image/${matches[1]}`;
+    buffer = Buffer.from(matches[2], "base64");
+  } else {
+    buffer = Buffer.from(coverBase64, "base64");
+  }
+
+  res.setHeader("Content-Type", contentType);
+  res.setHeader("Cache-Control", "public, max-age=86400"); // cache for 1 day
+  return res.send(buffer);
 }
 
 // API: Get all addons
 app.get("/api/addons", async (req, res) => {
   try {
     if (!db) {
-      return res.status(500).json({ error: "Database tidak terhubung." });
+      throw new Error("Database tidak terhubung.");
     }
     const addonsRef = collection(db, "addons");
     const querySnap = await getDocs(addonsRef);
     
     const addons = querySnap.docs.map((d) => {
       const data = d.data() as Addon;
+      const id = d.id;
+      
+      // Update local fallback DB cache to stay in sync with remote
+      if (!localAddons[id]) {
+        localAddons[id] = { ...data } as LocalAddon;
+      } else {
+        localAddons[id] = {
+          ...localAddons[id],
+          ...data
+        };
+      }
+
       // Exclude heavy coverBase64 field to keep GET response lightweight and ultra-fast
-      const { coverBase64, ...rest } = data as any;
+      const { coverBase64, chunks, ...rest } = data as any;
       return rest;
     });
 
+    saveLocalDb();
+
     // Sort by createdAt descending
     addons.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
     res.json(addons);
   } catch (err: any) {
-    console.error("Error getting addons:", err);
-    res.status(500).json({ error: "Gagal memuat daftar add-on: " + err.message });
+    console.warn("Firestore error, falling back to local DB cache:", err.message);
+    
+    // Fallback to local
+    const list = Object.values(localAddons).map(({ coverBase64, chunks, ...rest }) => rest);
+    list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    res.json(list);
   }
 });
 
 // API: Serve custom cover from Firestore database
 app.get("/api/addons/:id/cover", async (req, res) => {
+  const { id } = req.params;
   try {
-    if (!db) return res.status(500).send("Database tidak aktif");
-    const { id } = req.params;
+    if (!db) throw new Error("Database tidak aktif");
     
     const docRef = doc(db, "addons", id);
     const docSnap = await getDoc(docRef);
     
     if (!docSnap.exists()) {
-      return res.status(404).send("Gambar cover tidak ditemukan");
+      throw new Error("Gambar cover tidak ditemukan");
     }
 
     const data = docSnap.data();
     if (!data.coverBase64) {
-      return res.status(404).send("Data cover tidak tersedia");
+      throw new Error("Data cover tidak tersedia");
     }
 
-    const matches = data.coverBase64.match(/^data:image\/([A-Za-z-+]+);base64,(.+)$/);
-    let buffer: Buffer;
-    let contentType = "image/png";
-
-    if (matches && matches.length === 3) {
-      contentType = `image/${matches[1]}`;
-      buffer = Buffer.from(matches[2], "base64");
-    } else {
-      buffer = Buffer.from(data.coverBase64, "base64");
+    // Sync to local cache
+    if (localAddons[id]) {
+      localAddons[id].coverBase64 = data.coverBase64;
+      saveLocalDb();
     }
 
-    res.setHeader("Content-Type", contentType);
-    res.setHeader("Cache-Control", "public, max-age=86400"); // cache for 1 day
-    return res.send(buffer);
+    return sendCoverResponse(res, data.coverBase64);
   } catch (err: any) {
-    console.error("Error serving cover image:", err);
-    res.status(500).send("Error loading cover image");
+    console.warn(`Firestore cover fetch failed for ${id}, using local fallback:`, err.message);
+    const addon = localAddons[id];
+    if (addon && addon.coverBase64) {
+      return sendCoverResponse(res, addon.coverBase64);
+    }
+    return res.status(404).send("Gambar cover tidak ditemukan");
   }
 });
 
 // API: Upload a new addon (chunked inside Firestore)
 app.post("/api/addons", async (req, res) => {
+  const {
+    name,
+    description,
+    category,
+    compatibleVersion,
+    author,
+    coverBase64,
+    fileBase64,
+    fileName,
+    fileSize
+  } = req.body;
+
+  if (!name || !description || !category || !compatibleVersion || !fileName) {
+    return res.status(400).json({ error: "Kolom nama, deskripsi, kategori, versi kompatibel, dan file wajib diisi." });
+  }
+
+  const id = "addon-" + Date.now();
+
+  let finalCoverBase64 = coverBase64;
+  if (!finalCoverBase64) {
+    finalCoverBase64 = generateSvgCoverBase64(name, "#10b981");
+  }
+
+  const newAddon: Addon = {
+    id,
+    name,
+    description,
+    category,
+    compatibleVersion,
+    coverUrl: `/api/addons/${id}/cover`,
+    fileUrl: `/api/addons/${id}/download`,
+    fileName,
+    fileSize: fileSize || "1.0 MB",
+    downloads: 0,
+    comments: [],
+    createdAt: new Date().toISOString(),
+    author: author || "Admin"
+  };
+
+  // 1. Store locally immediately
+  const localChunks: { [key: string]: string } = {};
+  if (fileBase64) {
+    const CHUNK_SIZE = 500 * 1024;
+    let index = 0;
+    for (let i = 0; i < fileBase64.length; i += CHUNK_SIZE) {
+      localChunks[`chunk-${index}`] = fileBase64.slice(i, i + CHUNK_SIZE);
+      index++;
+    }
+  } else {
+    const dummyData = `// GL COM Minecraft Add-on File\n// Name: ${name}\n// Direct download without ads!\n// ID: ${id}`;
+    localChunks["chunk-0"] = Buffer.from(dummyData).toString("base64");
+  }
+
+  localAddons[id] = {
+    ...newAddon,
+    coverBase64: finalCoverBase64,
+    chunks: localChunks
+  };
+  saveLocalDb();
+
+  // 2. Optimistically try Firestore sync
   try {
-    if (!db) {
-      return res.status(500).json({ error: "Database tidak terhubung." });
-    }
-
-    const {
-      name,
-      description,
-      category,
-      compatibleVersion,
-      author,
-      coverBase64,
-      fileBase64,
-      fileName,
-      fileSize
-    } = req.body;
-
-    if (!name || !description || !category || !compatibleVersion || !fileName) {
-      return res.status(400).json({ error: "Kolom nama, deskripsi, kategori, versi kompatibel, dan file wajib diisi." });
-    }
-
-    const id = "addon-" + Date.now();
-
-    // Prepare cover base64
-    let finalCoverBase64 = coverBase64;
-    if (!finalCoverBase64) {
-      finalCoverBase64 = generateSvgCoverBase64(name, "#10b981");
-    }
-
-    const newAddon: Addon = {
-      id,
-      name,
-      description,
-      category,
-      compatibleVersion,
-      coverUrl: `/api/addons/${id}/cover`,
-      fileUrl: `/api/addons/${id}/download`,
-      fileName,
-      fileSize: fileSize || "1.0 MB",
-      downloads: 0,
-      comments: [],
-      createdAt: new Date().toISOString(),
-      author: author || "Admin"
-    };
-
-    // Save metadata + cover base64 in the parent document
+    if (!db) throw new Error("Database tidak terhubung.");
+    
     const addonRef = doc(db, "addons", id);
     await setDoc(addonRef, {
       ...newAddon,
       coverBase64: finalCoverBase64
     });
 
-    // Splitting base64 file data into chunks (< 1MB) to fit Firestore limits
     if (fileBase64) {
-      const CHUNK_SIZE = 500 * 1024; // 500KB chunks
+      const CHUNK_SIZE = 500 * 1024;
       let index = 0;
       const writePromises = [];
       for (let i = 0; i < fileBase64.length; i += CHUNK_SIZE) {
         const chunkData = fileBase64.slice(i, i + CHUNK_SIZE);
         const chunkRef = doc(db, "addons", id, "chunks", `chunk-${index}`);
-        writePromises.push(setDoc(chunkRef, {
-          index,
-          data: chunkData
-        }));
+        writePromises.push(setDoc(chunkRef, { index, data: chunkData }));
         index++;
       }
       await Promise.all(writePromises);
     } else {
-      // Create a default file placeholder chunk
       const dummyData = `// GL COM Minecraft Add-on File\n// Name: ${name}\n// Direct download without ads!\n// ID: ${id}`;
       const chunkRef = doc(db, "addons", id, "chunks", `chunk-0`);
       await setDoc(chunkRef, {
@@ -351,33 +454,36 @@ app.post("/api/addons", async (req, res) => {
         data: Buffer.from(dummyData).toString("base64")
       });
     }
-
-    res.status(201).json(newAddon);
+    console.log(`Addon ${name} successfully synced to Firestore.`);
   } catch (error: any) {
-    console.error("Error creating addon:", error);
-    res.status(500).json({ error: "Gagal menyimpan add-on: " + error.message });
+    console.warn("Gagal sinkronisasi ke Firestore (disimpan secara lokal):", error.message);
   }
+
+  res.status(201).json(newAddon);
 });
 
 // API: Direct direct direct download
 app.get("/api/addons/:id/download", async (req, res) => {
+  const { id } = req.params;
+  let addon: Addon | null = null;
+  let base64Content = "";
+
   try {
-    if (!db) return res.status(500).send("Database tidak aktif");
-    const { id } = req.params;
+    if (!db) throw new Error("Database tidak aktif");
 
     const docRef = doc(db, "addons", id);
     const docSnap = await getDoc(docRef);
 
     if (!docSnap.exists()) {
-      return res.status(404).send("Add-on tidak ditemukan");
+      throw new Error("Add-on tidak ditemukan");
     }
 
-    const addon = docSnap.data() as Addon;
+    addon = docSnap.data() as Addon;
 
-    // Increment downloads count in Firestore
-    await updateDoc(docRef, {
+    // Increment downloads count in Firestore (background/fire-and-forget)
+    updateDoc(docRef, {
       downloads: (addon.downloads || 0) + 1
-    });
+    }).catch((err) => console.warn("Failed to increment download count in Firestore:", err.message));
 
     // Fetch all binary chunks from Firestore subcollection
     const chunksRef = collection(db, "addons", id, "chunks");
@@ -385,100 +491,167 @@ app.get("/api/addons/:id/download", async (req, res) => {
     const chunks = querySnap.docs.map((d) => d.data());
 
     if (chunks.length === 0) {
-      return res.status(404).send("File add-on tidak ditemukan di penyimpanan database.");
+      throw new Error("File chunks empty in Firestore");
     }
 
-    // Sort chunks by index ascending
     chunks.sort((a, b) => a.index - b.index);
-
-    // Concatenate all chunks together
     const fullBase64 = chunks.map((c) => c.data).join("");
-
-    // Strip data URI prefix cleanly without buggy and expensive regex matching
-    let base64Content = fullBase64;
+    
     if (fullBase64.startsWith("data:")) {
       const commaIndex = fullBase64.indexOf(",");
       if (commaIndex !== -1) {
         base64Content = fullBase64.substring(commaIndex + 1);
       }
+    } else {
+      base64Content = fullBase64;
     }
 
-    const buffer = Buffer.from(base64Content, "base64");
+    // Sync back to local cache
+    if (localAddons[id]) {
+      localAddons[id].downloads = (localAddons[id].downloads || 0) + 1;
+      const localChunks: { [key: string]: string } = {};
+      chunks.forEach((c) => {
+        localChunks[`chunk-${c.index}`] = c.data;
+      });
+      localAddons[id].chunks = localChunks;
+      saveLocalDb();
+    }
 
-    res.setHeader("Content-Disposition", `attachment; filename="${addon.fileName}"`);
-    res.setHeader("Content-Type", "application/octet-stream");
-    return res.send(buffer);
   } catch (error: any) {
-    console.error("Download endpoint error:", error);
-    res.status(500).send("Gagal mengunduh berkas add-on: " + error.message);
+    console.warn(`Firestore download fetch failed for ${id}, using local fallback:`, error.message);
+    const localAddon = localAddons[id];
+    if (!localAddon) {
+      return res.status(404).send("Add-on tidak ditemukan");
+    }
+    addon = localAddon;
+    localAddon.downloads = (localAddon.downloads || 0) + 1;
+    saveLocalDb();
+
+    if (localAddon.chunks) {
+      const sortedKeys = Object.keys(localAddon.chunks).sort((a, b) => {
+        const idxA = parseInt(a.replace("chunk-", ""));
+        const idxB = parseInt(b.replace("chunk-", ""));
+        return idxA - idxB;
+      });
+      const fullBase64 = sortedKeys.map((k) => localAddon.chunks![k]).join("");
+      if (fullBase64.startsWith("data:")) {
+        const commaIndex = fullBase64.indexOf(",");
+        if (commaIndex !== -1) {
+          base64Content = fullBase64.substring(commaIndex + 1);
+        }
+      } else {
+        base64Content = fullBase64;
+      }
+    } else {
+      const dummyData = `// GL COM Minecraft Add-on File\n// Name: ${addon.name}\n// Direct download without ads!\n// ID: ${addon.id}`;
+      base64Content = Buffer.from(dummyData).toString("base64");
+    }
   }
+
+  if (!addon) {
+    return res.status(404).send("Add-on tidak ditemukan");
+  }
+
+  const buffer = Buffer.from(base64Content, "base64");
+  res.setHeader("Content-Disposition", `attachment; filename="${addon.fileName}"`);
+  res.setHeader("Content-Type", "application/octet-stream");
+  return res.send(buffer);
 });
 
 // API: Add comment to an addon
 app.post("/api/addons/:id/comments", async (req, res) => {
+  const { id } = req.params;
+  const { username, text } = req.body;
+
+  if (!username || !text) {
+    return res.status(400).json({ error: "Username dan isi komentar wajib diisi." });
+  }
+
+  const newComment: Comment = {
+    id: "comment-" + Date.now() + "-" + Math.random().toString(36).substr(2, 4),
+    username,
+    text,
+    createdAt: new Date().toISOString()
+  };
+
+  // 1. Save locally first
+  const localAddon = localAddons[id];
+  if (localAddon) {
+    localAddon.comments = localAddon.comments || [];
+    localAddon.comments.push(newComment);
+    saveLocalDb();
+  }
+
+  // 2. Try to sync to Firestore
   try {
-    if (!db) {
-      return res.status(500).json({ error: "Database tidak terhubung." });
-    }
-    const { id } = req.params;
-    const { username, text } = req.body;
-
-    if (!username || !text) {
-      return res.status(400).json({ error: "Username dan isi komentar wajib diisi." });
-    }
-
+    if (!db) throw new Error("Database tidak terhubung.");
     const addonRef = doc(db, "addons", id);
     const docSnap = await getDoc(addonRef);
-
-    if (!docSnap.exists()) {
-      return res.status(404).json({ error: "Add-on tidak ditemukan." });
+    if (docSnap.exists()) {
+      const addonData = docSnap.data();
+      const comments = addonData.comments || [];
+      comments.push(newComment);
+      await updateDoc(addonRef, { comments });
     }
-
-    const addonData = docSnap.data();
-    const comments = addonData.comments || [];
-
-    const newComment: Comment = {
-      id: "comment-" + Date.now() + "-" + Math.random().toString(36).substr(2, 4),
-      username,
-      text,
-      createdAt: new Date().toISOString()
-    };
-
-    comments.push(newComment);
-    await updateDoc(addonRef, { comments });
-
-    res.status(201).json(newComment);
   } catch (error: any) {
-    res.status(500).json({ error: "Gagal menambahkan komentar: " + error.message });
+    console.warn("Gagal sinkronisasi komentar ke Firestore (disimpan secara lokal):", error.message);
   }
+
+  res.status(201).json(newComment);
 });
 
 // API: Update an existing addon
 app.put("/api/addons/:id", async (req, res) => {
+  const { id } = req.params;
+  const {
+    name,
+    description,
+    category,
+    compatibleVersion,
+    author,
+    coverBase64,
+    fileBase64,
+    fileName,
+    fileSize
+  } = req.body;
+
+  // 1. Update local cache FIRST
+  const localAddon = localAddons[id];
+  if (!localAddon) {
+    return res.status(404).json({ error: "Add-on tidak ditemukan." });
+  }
+
+  if (name) localAddon.name = name;
+  if (description) localAddon.description = description;
+  if (category) localAddon.category = category;
+  if (compatibleVersion) localAddon.compatibleVersion = compatibleVersion;
+  if (author !== undefined) localAddon.author = author || "Admin";
+
+  if (coverBase64) {
+    localAddon.coverBase64 = coverBase64;
+    localAddon.coverUrl = `/api/addons/${id}/cover`;
+  }
+
+  if (fileBase64 && fileName) {
+    localAddon.fileName = fileName;
+    localAddon.fileSize = fileSize || "1.0 MB";
+    localAddon.fileUrl = `/api/addons/${id}/download`;
+
+    const localChunks: { [key: string]: string } = {};
+    const CHUNK_SIZE = 500 * 1024;
+    let index = 0;
+    for (let i = 0; i < fileBase64.length; i += CHUNK_SIZE) {
+      localChunks[`chunk-${index}`] = fileBase64.slice(i, i + CHUNK_SIZE);
+      index++;
+    }
+    localAddon.chunks = localChunks;
+  }
+  saveLocalDb();
+
+  // 2. Try syncing to Firestore
   try {
-    if (!db) {
-      return res.status(500).json({ error: "Database tidak terhubung." });
-    }
-    const { id } = req.params;
-    const {
-      name,
-      description,
-      category,
-      compatibleVersion,
-      author,
-      coverBase64,
-      fileBase64,
-      fileName,
-      fileSize
-    } = req.body;
-
+    if (!db) throw new Error("Database tidak terhubung.");
     const addonRef = doc(db, "addons", id);
-    const docSnap = await getDoc(addonRef);
-
-    if (!docSnap.exists()) {
-      return res.status(404).json({ error: "Add-on tidak ditemukan." });
-    }
-
     const updates: any = {};
 
     if (name) updates.name = name;
@@ -497,60 +670,51 @@ app.put("/api/addons/:id", async (req, res) => {
       updates.fileSize = fileSize || "1.0 MB";
       updates.fileUrl = `/api/addons/${id}/download`;
 
-      // Clean old chunks from Firestore in parallel
+      // Clean old chunks in parallel
       const chunksRef = collection(db, "addons", id, "chunks");
       const chunksSnap = await getDocs(chunksRef);
       const deletePromises = chunksSnap.docs.map((chunkDoc) => deleteDoc(chunkDoc.ref));
       await Promise.all(deletePromises);
 
-      // Write new chunks in parallel
-      const CHUNK_SIZE = 500 * 1024; // 500KB chunks
+      // Write new chunks
+      const CHUNK_SIZE = 500 * 1024;
       let index = 0;
       const writePromises = [];
       for (let i = 0; i < fileBase64.length; i += CHUNK_SIZE) {
         const chunkData = fileBase64.slice(i, i + CHUNK_SIZE);
         const chunkRef = doc(db, "addons", id, "chunks", `chunk-${index}`);
-        writePromises.push(setDoc(chunkRef, {
-          index,
-          data: chunkData
-        }));
+        writePromises.push(setDoc(chunkRef, { index, data: chunkData }));
         index++;
       }
       await Promise.all(writePromises);
     }
 
     await updateDoc(addonRef, updates);
-
-    // Retrieve fully updated document
-    const updatedSnap = await getDoc(addonRef);
-    const fullUpdated = updatedSnap.data();
-
-    // Clean lightweight copy to return to client
-    if (fullUpdated) {
-      delete fullUpdated.coverBase64;
-    }
-
-    res.json(fullUpdated);
   } catch (error: any) {
-    console.error("Error updating addon:", error);
-    res.status(500).json({ error: "Gagal memperbarui add-on: " + error.message });
+    console.warn("Gagal sinkronisasi update ke Firestore (disimpan secara lokal):", error.message);
   }
+
+  // Clean response representation
+  const { coverBase64: c, chunks: ch, ...rest } = localAddon;
+  res.json(rest);
 });
 
 // API: Delete an existing addon
 app.delete("/api/addons/:id", async (req, res) => {
+  const { id } = req.params;
+
+  // 1. Delete from local FIRST
+  if (!localAddons[id]) {
+    return res.status(404).json({ error: "Add-on tidak ditemukan." });
+  }
+  delete localAddons[id];
+  saveLocalDb();
+
+  // 2. Try syncing to Firestore
   try {
-    if (!db) {
-      return res.status(500).json({ error: "Database tidak terhubung." });
-    }
-    const { id } = req.params;
+    if (!db) throw new Error("Database tidak terhubung.");
     const addonRef = doc(db, "addons", id);
-    const docSnap = await getDoc(addonRef);
-
-    if (!docSnap.exists()) {
-      return res.status(404).json({ error: "Add-on tidak ditemukan." });
-    }
-
+    
     // First delete all file chunks subcollection in parallel
     const chunksRef = collection(db, "addons", id, "chunks");
     const chunksSnap = await getDocs(chunksRef);
@@ -559,12 +723,11 @@ app.delete("/api/addons/:id", async (req, res) => {
 
     // Delete parent addon metadata document
     await deleteDoc(addonRef);
-
-    res.json({ success: true, message: "Add-on berhasil dihapus." });
   } catch (error: any) {
-    console.error("Error deleting addon:", error);
-    res.status(500).json({ error: "Gagal menghapus add-on: " + error.message });
+    console.warn("Gagal sinkronisasi hapus ke Firestore (dihapus secara lokal):", error.message);
   }
+
+  res.json({ success: true, message: "Add-on berhasil dihapus." });
 });
 
 // Vite Integration
