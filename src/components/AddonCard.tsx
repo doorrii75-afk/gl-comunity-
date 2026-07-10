@@ -101,14 +101,21 @@ export default function AddonCard({ addon, onOpenDetails, onDownload }: AddonCar
             >
               <Eye size={14} />
             </button>
-            <button
+            <a
               id={`card-direct-download-${addon.id}`}
-              onClick={() => onDownload(addon)}
-              className="inline-flex items-center gap-1.5 bg-emerald-500/10 hover:bg-emerald-500 border border-emerald-500/20 hover:border-emerald-500 text-emerald-400 hover:text-slate-950 font-bold text-xs px-3 py-1.5 rounded-lg transition-all active:scale-95 cursor-pointer"
+              href={addon.fileUrl}
+              download={addon.fileName}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDownload(addon);
+              }}
+              className="inline-flex items-center gap-1.5 bg-emerald-500/10 hover:bg-emerald-500 border border-emerald-500/20 hover:border-emerald-500 text-emerald-400 hover:text-slate-950 font-bold text-xs px-3 py-1.5 rounded-lg transition-all active:scale-95 cursor-pointer text-center select-none"
             >
               <Download size={12} />
               Unduh
-            </button>
+            </a>
           </div>
         </div>
       </div>

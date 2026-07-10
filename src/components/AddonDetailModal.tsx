@@ -584,14 +584,18 @@ export default function AddonDetailModal({
 
                   {/* Right Download Controls */}
                   <div className="flex flex-col gap-2 min-w-[200px]">
-                    <button
+                    <a
                       id={`modal-download-btn-${addon.id}`}
+                      href={addon.fileUrl}
+                      download={addon.fileName}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       onClick={() => onDownload(addon)}
-                      className="w-full inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-slate-950 font-bold px-5 py-3 rounded-xl shadow-lg shadow-emerald-500/10 transition-all cursor-pointer"
+                      className="w-full inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-slate-950 font-bold px-5 py-3 rounded-xl shadow-lg shadow-emerald-500/10 transition-all cursor-pointer text-center select-none"
                     >
                       <Download size={18} className="animate-bounce" />
                       Unduh Langsung
-                    </button>
+                    </a>
                     <div className="flex items-center justify-center gap-1.5 text-[10px] text-emerald-400 font-bold font-mono">
                       <ShieldCheck size={12} />
                       100% AMAN • BEBAS IKLAN

@@ -84,15 +84,7 @@ export default function App() {
 
   // Handle direct download counter and save
   const handleDownload = (addon: Addon) => {
-    // 1. Create a dynamic link to trigger direct browser file download
-    const link = document.createElement("a");
-    link.href = addon.fileUrl;
-    link.setAttribute("download", addon.fileName);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-
-    // 2. Optimistically increment count on client-side state
+    // Optimistically increment count on client-side state
     setAddons((prev) =>
       prev.map((a) => {
         if (a.id === addon.id) {

@@ -331,15 +331,17 @@ app.post("/api/addons", async (req, res) => {
     if (fileBase64) {
       const CHUNK_SIZE = 500 * 1024; // 500KB chunks
       let index = 0;
+      const writePromises = [];
       for (let i = 0; i < fileBase64.length; i += CHUNK_SIZE) {
         const chunkData = fileBase64.slice(i, i + CHUNK_SIZE);
         const chunkRef = doc(db, "addons", id, "chunks", `chunk-${index}`);
-        await setDoc(chunkRef, {
+        writePromises.push(setDoc(chunkRef, {
           index,
           data: chunkData
-        });
+        }));
         index++;
       }
+      await Promise.all(writePromises);
     } else {
       // Create a default file placeholder chunk
       const dummyData = `// GL COM Minecraft Add-on File\n// Name: ${name}\n// Direct download without ads!\n// ID: ${id}`;
@@ -392,14 +394,16 @@ app.get("/api/addons/:id/download", async (req, res) => {
     // Concatenate all chunks together
     const fullBase64 = chunks.map((c) => c.data).join("");
 
-    const matches = fullBase64.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
-    let buffer: Buffer;
-
-    if (matches && matches.length === 3) {
-      buffer = Buffer.from(matches[2], "base64");
-    } else {
-      buffer = Buffer.from(fullBase64, "base64");
+    // Strip data URI prefix cleanly without buggy and expensive regex matching
+    let base64Content = fullBase64;
+    if (fullBase64.startsWith("data:")) {
+      const commaIndex = fullBase64.indexOf(",");
+      if (commaIndex !== -1) {
+        base64Content = fullBase64.substring(commaIndex + 1);
+      }
     }
+
+    const buffer = Buffer.from(base64Content, "base64");
 
     res.setHeader("Content-Disposition", `attachment; filename="${addon.fileName}"`);
     res.setHeader("Content-Type", "application/octet-stream");
@@ -493,25 +497,26 @@ app.put("/api/addons/:id", async (req, res) => {
       updates.fileSize = fileSize || "1.0 MB";
       updates.fileUrl = `/api/addons/${id}/download`;
 
-      // Clean old chunks from Firestore before uploading new ones
+      // Clean old chunks from Firestore in parallel
       const chunksRef = collection(db, "addons", id, "chunks");
       const chunksSnap = await getDocs(chunksRef);
-      for (const chunkDoc of chunksSnap.docs) {
-        await deleteDoc(chunkDoc.ref);
-      }
+      const deletePromises = chunksSnap.docs.map((chunkDoc) => deleteDoc(chunkDoc.ref));
+      await Promise.all(deletePromises);
 
-      // Write new chunks
+      // Write new chunks in parallel
       const CHUNK_SIZE = 500 * 1024; // 500KB chunks
       let index = 0;
+      const writePromises = [];
       for (let i = 0; i < fileBase64.length; i += CHUNK_SIZE) {
         const chunkData = fileBase64.slice(i, i + CHUNK_SIZE);
         const chunkRef = doc(db, "addons", id, "chunks", `chunk-${index}`);
-        await setDoc(chunkRef, {
+        writePromises.push(setDoc(chunkRef, {
           index,
           data: chunkData
-        });
+        }));
         index++;
       }
+      await Promise.all(writePromises);
     }
 
     await updateDoc(addonRef, updates);
@@ -546,12 +551,11 @@ app.delete("/api/addons/:id", async (req, res) => {
       return res.status(404).json({ error: "Add-on tidak ditemukan." });
     }
 
-    // First delete all file chunks subcollection
+    // First delete all file chunks subcollection in parallel
     const chunksRef = collection(db, "addons", id, "chunks");
     const chunksSnap = await getDocs(chunksRef);
-    for (const chunkDoc of chunksSnap.docs) {
-      await deleteDoc(chunkDoc.ref);
-    }
+    const deletePromises = chunksSnap.docs.map((chunkDoc) => deleteDoc(chunkDoc.ref));
+    await Promise.all(deletePromises);
 
     // Delete parent addon metadata document
     await deleteDoc(addonRef);
