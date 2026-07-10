@@ -1,0 +1,45 @@
+{
+  "entities": {
+    "Addon": {
+      "title": "Addon",
+      "description": "Minecraft add-on metadata and comments",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "category": { "type": "string" },
+        "compatibleVersion": { "type": "string" },
+        "coverUrl": { "type": "string" },
+        "fileUrl": { "type": "string" },
+        "fileName": { "type": "string" },
+        "fileSize": { "type": "string" },
+        "downloads": { "type": "number" },
+        "author": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "comments": { "type": "array" }
+      },
+      "required": ["id", "name", "description", "category", "compatibleVersion", "downloads", "createdAt", "fileName"]
+    },
+    "FileChunk": {
+      "title": "FileChunk",
+      "description": "A chunk of the uploaded binary file to fit within the 1MB Firestore document limit",
+      "type": "object",
+      "properties": {
+        "index": { "type": "number" },
+        "data": { "type": "string" }
+      },
+      "required": ["index", "data"]
+    }
+  },
+  "firestore": {
+    "/addons/{addonId}": {
+      "schema": "Addon",
+      "description": "Add-on primary metadata documents"
+    },
+    "/addons/{addonId}/chunks/{chunkId}": {
+      "schema": "FileChunk",
+      "description": "File chunks for the add-on binary file"
+    }
+  }
+}

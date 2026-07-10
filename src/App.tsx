@@ -41,7 +41,14 @@ export default function App() {
     try {
       const response = await fetch("/api/addons");
       if (!response.ok) {
-        throw new Error("Gagal memuat daftar add-on.");
+        let errMsg = "Gagal memuat daftar add-on.";
+        try {
+          const errData = await response.json();
+          if (errData && errData.error) {
+            errMsg = errData.error;
+          }
+        } catch (_) {}
+        throw new Error(errMsg);
       }
       const data = await response.json();
       setAddons(data);

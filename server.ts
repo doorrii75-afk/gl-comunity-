@@ -7,6 +7,17 @@ import express from "express";
 import path from "path";
 import fs from "fs";
 import { createServer as createViteServer } from "vite";
+import { initializeApp } from "firebase/app";
+import {
+  getFirestore,
+  collection,
+  doc,
+  getDocs,
+  getDoc,
+  setDoc,
+  updateDoc,
+  deleteDoc
+} from "firebase/firestore";
 import { Addon, Comment } from "./src/types.js";
 
 const app = express();
@@ -16,17 +27,9 @@ const PORT = 3000;
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
-const DB_FILE = path.join(process.cwd(), "addons_db.json");
-const UPLOADS_DIR = path.join(process.cwd(), "uploads");
-const COVERS_DIR = path.join(UPLOADS_DIR, "covers");
-const FILES_DIR = path.join(UPLOADS_DIR, "files");
-
-// Ensure directories exist
-[UPLOADS_DIR, COVERS_DIR, FILES_DIR].forEach((dir) => {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-});
+// Initialize Firebase Client SDK
+const firebaseConfigPath = path.join(process.cwd(), "firebase-applet-config.json");
+let db: any = null;
 
 // Helper to generate custom SVGs as cover page base64 images
 function generateSvgCoverBase64(title: string, color: string): string {
@@ -47,154 +50,236 @@ function generateSvgCoverBase64(title: string, color: string): string {
   return `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
 }
 
-// Initial/Seed Add-ons Data
-const DEFAULT_ADDONS: Addon[] = [
-  {
-    id: "addon-1",
-    name: "More Ores & Armor Ultimate",
-    description: "Menambahkan lebih dari 15 jenis bijih tambang baru di bawah tanah Minecraft! Mulai dari Ruby, Sapphire, Amethyst, Cobalt, hingga Vibranium kuno. Setiap bijih dapat ditempa menjadi set armor lengkap dan peralatan perang (pedang, kapak, beliung) dengan efek pasif unik seperti ketahanan api, kecepatan gerak, atau penglihatan malam.",
-    category: "Survival",
-    compatibleVersion: "1.21.x - 1.22.x",
-    coverUrl: "", // Will be populated with SVG base64
-    fileUrl: "/api/addons/addon-1/download",
-    fileName: "more_ores_ultimate.mcaddon",
-    fileSize: "4.2 MB",
-    downloads: 1450,
-    comments: [
-      {
-        id: "c1-1",
-        username: "StevePro",
-        text: "Addon ini keren banget! Akhirnya grinding mining jadi seru lagi karena banyak mineral baru.",
-        createdAt: "2026-07-08T14:30:00Z"
-      },
-      {
-        id: "c1-2",
-        username: "AlexMinecraft",
-        text: "Apakah armor Vibranium benar-benar kebal dari ledakan Creeper? Udah nyoba dan gila kuat banget!",
-        createdAt: "2026-07-09T09:15:00Z"
-      }
-    ],
-    createdAt: "2026-07-01T12:00:00Z",
-    author: "GL Admin"
-  },
-  {
-    id: "addon-2",
-    name: "Modern Furniture DecoCraft",
-    description: "Hiasi rumah modern impianmu dengan ratusan furnitur interaktif! Dilengkapi kulkas fungsional yang bisa menyimpan makanan, sofa empuk untuk bersantai, TV LED yang bisa dinyalakan, lampu tidur dengan tingkat kecerahan dinamis, hingga set wastafel dan toilet modern. Sangat cocok untuk pemain kreatif maupun survival dekoratif.",
-    category: "Kreatif",
-    compatibleVersion: "1.20.x - 1.21.x",
-    coverUrl: "", // Will be populated
-    fileUrl: "/api/addons/addon-2/download",
-    fileName: "modern_furniture_deco.mcaddon",
-    fileSize: "8.7 MB",
-    downloads: 2890,
-    comments: [
-      {
-        id: "c2-1",
-        username: "BuilderCraft",
-        text: "Akhirnya bisa bikin ruang tamu yang kelihatan mewah! Sofa birunya mantap.",
-        createdAt: "2026-07-07T11:20:00Z"
-      }
-    ],
-    createdAt: "2026-07-03T10:00:00Z",
-    author: "GL Admin"
-  },
-  {
-    id: "addon-3",
-    name: "Advanced Super Vehicles Pack",
-    description: "Kendarai kendaraan berkecepatan tinggi di dunia kotak-kotakmu! Paket ini menghadirkan mobil sport mewah, helikopter tempur, sepeda motor trail, jet ski, dan truk tangki air. Semua kendaraan memiliki animasi roda berputar, speedometer di HUD, bagasi penyimpanan terintegrasi, dan membutuhkan bahan bakar batu bara atau bensin.",
-    category: "Transportasi",
-    compatibleVersion: "1.21.x",
-    coverUrl: "", // Will be populated
-    fileUrl: "/api/addons/addon-3/download",
-    fileName: "super_vehicles_pack.mcaddon",
-    fileSize: "12.4 MB",
-    downloads: 3200,
-    comments: [
-      {
-        id: "c3-1",
-        username: "RacerX",
-        text: "Kecepatan mobil sportnya luar biasa! Tapi helikopternya agak susah dikendalikan di HP.",
-        createdAt: "2026-07-08T18:45:00Z"
-      }
-    ],
-    createdAt: "2026-07-04T08:30:00Z",
-    author: "GL Admin"
-  },
-  {
-    id: "addon-4",
-    name: "Fantasy Mythical Creatures",
-    description: "Dunia Minecraft-mu sekarang dihuni oleh makhluk-makhluk mitologi legendaris! Temui naga api di gunung berapi, Pegasus terbang tinggi di langit savana, peri hutan yang ramah di biome bunga, hingga Minotaur raksasa yang menjaga labirin bawah tanah. Beberapa makhluk dapat dijinakkan dan dijadikan tunggangan tempur!",
-    category: "Petualangan",
-    compatibleVersion: "1.20.x - 1.22.x",
-    coverUrl: "", // Will be populated
-    fileUrl: "/api/addons/addon-4/download",
-    fileName: "mythical_creatures.mcaddon",
-    fileSize: "15.1 MB",
-    downloads: 1980,
-    comments: [],
-    createdAt: "2026-07-05T15:10:00Z",
-    author: "GL Admin"
-  },
-  {
-    id: "addon-5",
-    name: "Waypoints & Dynamic Minimap HUD",
-    description: "Alat navigasi esensial untuk para petualang sejati! Addon ini menambahkan HUD minimap melingkar di sudut layar yang mendeteksi musuh di sekitar secara real-time. Kamu juga bisa membuat kustom waypoint (titik penanda) dengan warna berbeda, dan melakukan teleportasi langsung ke koordinat tersebut melalui menu GUI kompas khusus.",
-    category: "Alat (Tools)",
-    compatibleVersion: "1.19.x - 1.21.x",
-    coverUrl: "", // Will be populated
-    fileUrl: "/api/addons/addon-5/download",
-    fileName: "waypoints_minimap.mcaddon",
-    fileSize: "1.8 MB",
-    downloads: 4120,
-    comments: [
-      {
-        id: "c5-1",
-        username: "ExplorerNoob",
-        text: "Sangat membantu biar gak tersesat pas nyari Nether Fortress! Fitur teleportasinya juara.",
-        createdAt: "2026-07-09T03:40:00Z"
-      }
-    ],
-    createdAt: "2026-07-06T09:00:00Z",
-    author: "GL Admin"
-  }
-];
-
-// Ensure database is initialized empty on startup if not present
-function initDatabase() {
-  if (!fs.existsSync(DB_FILE)) {
-    fs.writeFileSync(DB_FILE, JSON.stringify([], null, 2));
-  }
-}
-
-initDatabase();
-
-// Load Database Helper
-function getAddons(): Addon[] {
+async function seedDatabaseIfEmpty() {
+  if (!db) return;
   try {
-    return JSON.parse(fs.readFileSync(DB_FILE, "utf-8"));
-  } catch (e) {
-    return [];
+    const addonsRef = collection(db, "addons");
+    const querySnap = await getDocs(addonsRef);
+    if (querySnap.empty) {
+      console.log("Database is empty, seeding default addons...");
+      const DEFAULT_ADDONS = [
+        {
+          id: "addon-1",
+          name: "More Ores & Armor Ultimate",
+          description: "Menambahkan lebih dari 15 jenis bijih tambang baru di bawah tanah Minecraft! Mulai dari Ruby, Sapphire, Amethyst, Cobalt, hingga Vibranium kuno. Setiap bijih dapat ditempa menjadi set armor lengkap dan peralatan perang (pedang, kapak, beliung) dengan efek pasif unik seperti ketahanan api, kecepatan gerak, atau penglihatan malam.",
+          category: "Survival",
+          compatibleVersion: "1.21.x - 1.22.x",
+          coverUrl: "/api/addons/addon-1/cover",
+          fileUrl: "/api/addons/addon-1/download",
+          fileName: "more_ores_ultimate.mcaddon",
+          fileSize: "4.2 MB",
+          downloads: 1450,
+          comments: [
+            {
+              id: "c1-1",
+              username: "StevePro",
+              text: "Addon ini keren banget! Akhirnya grinding mining jadi seru lagi karena banyak mineral baru.",
+              createdAt: "2026-07-08T14:30:00Z"
+            },
+            {
+              id: "c1-2",
+              username: "AlexMinecraft",
+              text: "Apakah armor Vibranium benar-benar kebal dari ledakan Creeper? Udah nyoba dan gila kuat banget!",
+              createdAt: "2026-07-09T09:15:00Z"
+            }
+          ],
+          createdAt: "2026-07-01T12:00:00Z",
+          author: "GL Admin",
+          color: "#3b82f6"
+        },
+        {
+          id: "addon-2",
+          name: "Modern Furniture DecoCraft",
+          description: "Hiasi rumah modern impianmu dengan ratusan furnitur interaktif! Dilengkapi kulkas fungsional yang bisa menyimpan makanan, sofa empuk untuk bersantai, TV LED yang bisa dinyalakan, lampu tidur dengan tingkat kecerahan dinamis, hingga set wastafel dan toilet modern. Sangat cocok untuk pemain kreatif maupun survival dekoratif.",
+          category: "Kreatif",
+          compatibleVersion: "1.20.x - 1.21.x",
+          coverUrl: "/api/addons/addon-2/cover",
+          fileUrl: "/api/addons/addon-2/download",
+          fileName: "modern_furniture_deco.mcaddon",
+          fileSize: "8.7 MB",
+          downloads: 2890,
+          comments: [
+            {
+              id: "c2-1",
+              username: "BuilderCraft",
+              text: "Akhirnya bisa bikin ruang tamu yang kelihatan mewah! Sofa birunya mantap.",
+              createdAt: "2026-07-07T11:20:00Z"
+            }
+          ],
+          createdAt: "2026-07-03T10:00:00Z",
+          author: "GL Admin",
+          color: "#ec4899"
+        },
+        {
+          id: "addon-3",
+          name: "Advanced Super Vehicles Pack",
+          description: "Kendarai kendaraan berkecepatan tinggi di dunia kotak-kotakmu! Paket ini menghadirkan mobil sport mewah, helikopter tempur, sepeda motor trail, jet ski, dan truk tangki air. Semua kendaraan memiliki animasi roda berputar, speedometer di HUD, bagasi penyimpanan terintegrasi, dan membutuhkan bahan bakar batu bara atau bensin.",
+          category: "Transportasi",
+          compatibleVersion: "1.21.x",
+          coverUrl: "/api/addons/addon-3/cover",
+          fileUrl: "/api/addons/addon-3/download",
+          fileName: "super_vehicles_pack.mcaddon",
+          fileSize: "12.4 MB",
+          downloads: 3200,
+          comments: [
+            {
+              id: "c3-1",
+              username: "RacerX",
+              text: "Kecepatan mobil sportnya luar biasa! Tapi helikopternya agak susah dikendalikan di HP.",
+              createdAt: "2026-07-08T18:45:00Z"
+            }
+          ],
+          createdAt: "2026-07-04T08:30:00Z",
+          author: "GL Admin",
+          color: "#f59e0b"
+        },
+        {
+          id: "addon-4",
+          name: "Fantasy Mythical Creatures",
+          description: "Dunia Minecraft-mu sekarang dihuni oleh makhluk-makhluk mitologi legendaris! Temui naga api di gunung berapi, Pegasus terbang tinggi di langit savana, peri hutan yang ramah di biome bunga, hingga Minotaur raksasa yang menjaga labirin bawah tanah. Beberapa makhluk dapat dijinakkan dan dijadikan tunggangan tempur!",
+          category: "Petualangan",
+          compatibleVersion: "1.20.x - 1.22.x",
+          coverUrl: "/api/addons/addon-4/cover",
+          fileUrl: "/api/addons/addon-4/download",
+          fileName: "mythical_creatures.mcaddon",
+          fileSize: "15.1 MB",
+          downloads: 1980,
+          comments: [],
+          createdAt: "2026-07-05T15:10:00Z",
+          author: "GL Admin",
+          color: "#10b981"
+        },
+        {
+          id: "addon-5",
+          name: "Waypoints & Dynamic Minimap HUD",
+          description: "Alat navigasi esensial untuk para petualang sejati! Addon ini menambahkan HUD minimap melingkar di sudut layar yang mendeteksi musuh di sekitar secara real-time. Kamu juga bisa membuat kustom waypoint (titik penanda) dengan warna berbeda, dan melakukan teleportasi langsung ke koordinat tersebut melalui menu GUI kompas khusus.",
+          category: "Alat (Tools)",
+          compatibleVersion: "1.19.x - 1.21.x",
+          coverUrl: "/api/addons/addon-5/cover",
+          fileUrl: "/api/addons/addon-5/download",
+          fileName: "waypoints_minimap.mcaddon",
+          fileSize: "1.8 MB",
+          downloads: 4120,
+          comments: [
+            {
+              id: "c5-1",
+              username: "ExplorerNoob",
+              text: "Sangat membantu biar gak tersesat pas nyari Nether Fortress! Fitur teleportasinya juara.",
+              createdAt: "2026-07-09T03:40:00Z"
+            }
+          ],
+          createdAt: "2026-07-06T09:00:00Z",
+          author: "GL Admin",
+          color: "#8b5cf6"
+        }
+      ];
+
+      for (const item of DEFAULT_ADDONS) {
+        const docRef = doc(db, "addons", item.id);
+        const coverBase64 = generateSvgCoverBase64(item.name, item.color);
+        const { color, ...addonData } = item;
+        await setDoc(docRef, {
+          ...addonData,
+          coverBase64
+        });
+
+        const dummyData = `// GL COM Minecraft Add-on File\n// Name: ${item.name}\n// Direct download without ads!\n// ID: ${item.id}`;
+        const chunkRef = doc(db, "addons", item.id, "chunks", "chunk-0");
+        await setDoc(chunkRef, {
+          index: 0,
+          data: Buffer.from(dummyData).toString("base64")
+        });
+      }
+      console.log("Seeding completed successfully.");
+    }
+  } catch (err) {
+    console.error("Error seeding database:", err);
   }
 }
 
-// Save Database Helper
-function saveAddons(addons: Addon[]) {
-  fs.writeFileSync(DB_FILE, JSON.stringify(addons, null, 2));
+if (fs.existsSync(firebaseConfigPath)) {
+  try {
+    const firebaseConfig = JSON.parse(fs.readFileSync(firebaseConfigPath, "utf-8"));
+    const firebaseApp = initializeApp(firebaseConfig);
+    db = getFirestore(firebaseApp, firebaseConfig.firestoreDatabaseId);
+    console.log("Firebase initialized successfully on server. DB ID:", firebaseConfig.firestoreDatabaseId);
+    seedDatabaseIfEmpty();
+  } catch (err) {
+    console.error("Error initializing Firebase:", err);
+  }
 }
-
-// Serve uploaded covers statically
-app.use("/uploads", express.static(UPLOADS_DIR));
 
 // API: Get all addons
-app.get("/api/addons", (req, res) => {
-  const addons = getAddons();
-  res.json(addons);
+app.get("/api/addons", async (req, res) => {
+  try {
+    if (!db) {
+      return res.status(500).json({ error: "Database tidak terhubung." });
+    }
+    const addonsRef = collection(db, "addons");
+    const querySnap = await getDocs(addonsRef);
+    
+    const addons = querySnap.docs.map((d) => {
+      const data = d.data() as Addon;
+      // Exclude heavy coverBase64 field to keep GET response lightweight and ultra-fast
+      const { coverBase64, ...rest } = data as any;
+      return rest;
+    });
+
+    // Sort by createdAt descending
+    addons.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    res.json(addons);
+  } catch (err: any) {
+    console.error("Error getting addons:", err);
+    res.status(500).json({ error: "Gagal memuat daftar add-on: " + err.message });
+  }
 });
 
-// API: Upload a new addon (with Base64 payload)
-app.post("/api/addons", (req, res) => {
+// API: Serve custom cover from Firestore database
+app.get("/api/addons/:id/cover", async (req, res) => {
   try {
+    if (!db) return res.status(500).send("Database tidak aktif");
+    const { id } = req.params;
+    
+    const docRef = doc(db, "addons", id);
+    const docSnap = await getDoc(docRef);
+    
+    if (!docSnap.exists()) {
+      return res.status(404).send("Gambar cover tidak ditemukan");
+    }
+
+    const data = docSnap.data();
+    if (!data.coverBase64) {
+      return res.status(404).send("Data cover tidak tersedia");
+    }
+
+    const matches = data.coverBase64.match(/^data:image\/([A-Za-z-+]+);base64,(.+)$/);
+    let buffer: Buffer;
+    let contentType = "image/png";
+
+    if (matches && matches.length === 3) {
+      contentType = `image/${matches[1]}`;
+      buffer = Buffer.from(matches[2], "base64");
+    } else {
+      buffer = Buffer.from(data.coverBase64, "base64");
+    }
+
+    res.setHeader("Content-Type", contentType);
+    res.setHeader("Cache-Control", "public, max-age=86400"); // cache for 1 day
+    return res.send(buffer);
+  } catch (err: any) {
+    console.error("Error serving cover image:", err);
+    res.status(500).send("Error loading cover image");
+  }
+});
+
+// API: Upload a new addon (chunked inside Firestore)
+app.post("/api/addons", async (req, res) => {
+  try {
+    if (!db) {
+      return res.status(500).json({ error: "Database tidak terhubung." });
+    }
+
     const {
       name,
       description,
@@ -211,56 +296,12 @@ app.post("/api/addons", (req, res) => {
       return res.status(400).json({ error: "Kolom nama, deskripsi, kategori, versi kompatibel, dan file wajib diisi." });
     }
 
-    const addons = getAddons();
     const id = "addon-" + Date.now();
 
-    let coverUrl = "";
-    if (coverBase64) {
-      // Decode and save custom cover
-      const matches = coverBase64.match(/^data:image\/([A-Za-z-+]+);base64,(.+)$/);
-      let ext = "png";
-      let buffer: Buffer;
-
-      if (matches && matches.length === 3) {
-        ext = matches[1];
-        buffer = Buffer.from(matches[2], "base64");
-      } else {
-        buffer = Buffer.from(coverBase64, "base64");
-      }
-
-      const coverFilename = `cover-${id}.${ext}`;
-      fs.writeFileSync(path.join(COVERS_DIR, coverFilename), buffer);
-      coverUrl = `/uploads/covers/${coverFilename}`;
-    } else {
-      // Generate standard cover
-      const coverBase64 = generateSvgCoverBase64(name, "#10b981");
-      const coverFilename = `cover-${id}.svg`;
-      const base64Data = coverBase64.replace(/^data:image\/svg\+xml;base64,/, "");
-      fs.writeFileSync(path.join(COVERS_DIR, coverFilename), Buffer.from(base64Data, "base64"));
-      coverUrl = `/uploads/covers/${coverFilename}`;
-    }
-
-    let fileUrl = "";
-    if (fileBase64) {
-      // Decode and save addon file
-      const matches = fileBase64.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
-      let buffer: Buffer;
-
-      if (matches && matches.length === 3) {
-        buffer = Buffer.from(matches[2], "base64");
-      } else {
-        buffer = Buffer.from(fileBase64, "base64");
-      }
-
-      // Safe filename sanitation
-      const safeFileName = fileName.replace(/[^a-zA-Z0-9.\-_]/g, "_");
-      fs.writeFileSync(path.join(FILES_DIR, `${id}-${safeFileName}`), buffer);
-      fileUrl = `/api/addons/${id}/download`;
-    } else {
-      // Create a dummy file if not supplied, though client will supply it
-      const safeFileName = fileName.replace(/[^a-zA-Z0-9.\-_]/g, "_");
-      fs.writeFileSync(path.join(FILES_DIR, `${id}-${safeFileName}`), `// MOCK ADDON FILE ${name}`);
-      fileUrl = `/api/addons/${id}/download`;
+    // Prepare cover base64
+    let finalCoverBase64 = coverBase64;
+    if (!finalCoverBase64) {
+      finalCoverBase64 = generateSvgCoverBase64(name, "#10b981");
     }
 
     const newAddon: Addon = {
@@ -269,8 +310,8 @@ app.post("/api/addons", (req, res) => {
       description,
       category,
       compatibleVersion,
-      coverUrl,
-      fileUrl,
+      coverUrl: `/api/addons/${id}/cover`,
+      fileUrl: `/api/addons/${id}/download`,
       fileName,
       fileSize: fileSize || "1.0 MB",
       downloads: 0,
@@ -279,8 +320,35 @@ app.post("/api/addons", (req, res) => {
       author: author || "Admin"
     };
 
-    addons.unshift(newAddon);
-    saveAddons(addons);
+    // Save metadata + cover base64 in the parent document
+    const addonRef = doc(db, "addons", id);
+    await setDoc(addonRef, {
+      ...newAddon,
+      coverBase64: finalCoverBase64
+    });
+
+    // Splitting base64 file data into chunks (< 1MB) to fit Firestore limits
+    if (fileBase64) {
+      const CHUNK_SIZE = 500 * 1024; // 500KB chunks
+      let index = 0;
+      for (let i = 0; i < fileBase64.length; i += CHUNK_SIZE) {
+        const chunkData = fileBase64.slice(i, i + CHUNK_SIZE);
+        const chunkRef = doc(db, "addons", id, "chunks", `chunk-${index}`);
+        await setDoc(chunkRef, {
+          index,
+          data: chunkData
+        });
+        index++;
+      }
+    } else {
+      // Create a default file placeholder chunk
+      const dummyData = `// GL COM Minecraft Add-on File\n// Name: ${name}\n// Direct download without ads!\n// ID: ${id}`;
+      const chunkRef = doc(db, "addons", id, "chunks", `chunk-0`);
+      await setDoc(chunkRef, {
+        index: 0,
+        data: Buffer.from(dummyData).toString("base64")
+      });
+    }
 
     res.status(201).json(newAddon);
   } catch (error: any) {
@@ -289,57 +357,65 @@ app.post("/api/addons", (req, res) => {
   }
 });
 
-// API: Direct Direct direct direct ad-free download
-// Also increments download count!
-app.get("/api/addons/:id/download", (req, res) => {
+// API: Direct direct direct download
+app.get("/api/addons/:id/download", async (req, res) => {
   try {
+    if (!db) return res.status(500).send("Database tidak aktif");
     const { id } = req.params;
-    const addons = getAddons();
-    const addon = addons.find((a) => a.id === id);
 
-    if (!addon) {
+    const docRef = doc(db, "addons", id);
+    const docSnap = await getDoc(docRef);
+
+    if (!docSnap.exists()) {
       return res.status(404).send("Add-on tidak ditemukan");
     }
 
-    // Increment downloads count on the server
-    addon.downloads += 1;
-    saveAddons(addons);
+    const addon = docSnap.data() as Addon;
 
-    // Look for the file on disk
-    // 1. First check with the sanitized filename format (how uploads are written to disk)
-    const safeFileName = addon.fileName.replace(/[^a-zA-Z0-9.\-_]/g, "_");
-    let filePath = path.join(FILES_DIR, `${addon.id}-${safeFileName}`);
-    
-    // 2. Second check with the raw `${id}-${fileName}` format as fallback
-    if (!fs.existsSync(filePath)) {
-      filePath = path.join(FILES_DIR, `${addon.id}-${addon.fileName}`);
-    }
-    
-    // 3. Third check with just addon.fileName as fallback
-    if (!fs.existsSync(filePath)) {
-      filePath = path.join(FILES_DIR, addon.fileName);
-    }
-
-    // If still not exist, write a fallback text file dynamically so the download doesn't crash completely
-    if (!fs.existsSync(filePath)) {
-      fs.writeFileSync(filePath, `// GL COM Minecraft Add-on File\n// Name: ${addon.name}\n// Direct download without ads!\n// ID: ${addon.id}`);
-    }
-
-    // Direct download without ads! Beautiful!
-    res.download(filePath, addon.fileName, (err) => {
-      if (err) {
-        console.error("Error sending file:", err);
-      }
+    // Increment downloads count in Firestore
+    await updateDoc(docRef, {
+      downloads: (addon.downloads || 0) + 1
     });
-  } catch (error) {
+
+    // Fetch all binary chunks from Firestore subcollection
+    const chunksRef = collection(db, "addons", id, "chunks");
+    const querySnap = await getDocs(chunksRef);
+    const chunks = querySnap.docs.map((d) => d.data());
+
+    if (chunks.length === 0) {
+      return res.status(404).send("File add-on tidak ditemukan di penyimpanan database.");
+    }
+
+    // Sort chunks by index ascending
+    chunks.sort((a, b) => a.index - b.index);
+
+    // Concatenate all chunks together
+    const fullBase64 = chunks.map((c) => c.data).join("");
+
+    const matches = fullBase64.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+    let buffer: Buffer;
+
+    if (matches && matches.length === 3) {
+      buffer = Buffer.from(matches[2], "base64");
+    } else {
+      buffer = Buffer.from(fullBase64, "base64");
+    }
+
+    res.setHeader("Content-Disposition", `attachment; filename="${addon.fileName}"`);
+    res.setHeader("Content-Type", "application/octet-stream");
+    return res.send(buffer);
+  } catch (error: any) {
     console.error("Download endpoint error:", error);
-    res.status(500).send("Error downloading file");
+    res.status(500).send("Gagal mengunduh berkas add-on: " + error.message);
   }
 });
 
 // API: Add comment to an addon
-app.post("/api/addons/:id/comments", (req, res) => {
+app.post("/api/addons/:id/comments", async (req, res) => {
   try {
+    if (!db) {
+      return res.status(500).json({ error: "Database tidak terhubung." });
+    }
     const { id } = req.params;
     const { username, text } = req.body;
 
@@ -347,12 +423,15 @@ app.post("/api/addons/:id/comments", (req, res) => {
       return res.status(400).json({ error: "Username dan isi komentar wajib diisi." });
     }
 
-    const addons = getAddons();
-    const addonIndex = addons.findIndex((a) => a.id === id);
+    const addonRef = doc(db, "addons", id);
+    const docSnap = await getDoc(addonRef);
 
-    if (addonIndex === -1) {
+    if (!docSnap.exists()) {
       return res.status(404).json({ error: "Add-on tidak ditemukan." });
     }
+
+    const addonData = docSnap.data();
+    const comments = addonData.comments || [];
 
     const newComment: Comment = {
       id: "comment-" + Date.now() + "-" + Math.random().toString(36).substr(2, 4),
@@ -361,8 +440,8 @@ app.post("/api/addons/:id/comments", (req, res) => {
       createdAt: new Date().toISOString()
     };
 
-    addons[addonIndex].comments.push(newComment);
-    saveAddons(addons);
+    comments.push(newComment);
+    await updateDoc(addonRef, { comments });
 
     res.status(201).json(newComment);
   } catch (error: any) {
@@ -371,8 +450,11 @@ app.post("/api/addons/:id/comments", (req, res) => {
 });
 
 // API: Update an existing addon
-app.put("/api/addons/:id", (req, res) => {
+app.put("/api/addons/:id", async (req, res) => {
   try {
+    if (!db) {
+      return res.status(500).json({ error: "Database tidak terhubung." });
+    }
     const { id } = req.params;
     const {
       name,
@@ -386,77 +468,64 @@ app.put("/api/addons/:id", (req, res) => {
       fileSize
     } = req.body;
 
-    const addons = getAddons();
-    const addonIndex = addons.findIndex((a) => a.id === id);
+    const addonRef = doc(db, "addons", id);
+    const docSnap = await getDoc(addonRef);
 
-    if (addonIndex === -1) {
+    if (!docSnap.exists()) {
       return res.status(404).json({ error: "Add-on tidak ditemukan." });
     }
 
-    const addon = addons[addonIndex];
+    const updates: any = {};
 
-    if (name) addon.name = name;
-    if (description) addon.description = description;
-    if (category) addon.category = category;
-    if (compatibleVersion) addon.compatibleVersion = compatibleVersion;
-    if (author !== undefined) addon.author = author || "Admin";
+    if (name) updates.name = name;
+    if (description) updates.description = description;
+    if (category) updates.category = category;
+    if (compatibleVersion) updates.compatibleVersion = compatibleVersion;
+    if (author !== undefined) updates.author = author || "Admin";
 
     if (coverBase64) {
-      const matches = coverBase64.match(/^data:image\/([A-Za-z-+]+);base64,(.+)$/);
-      let ext = "png";
-      let buffer: Buffer;
-
-      if (matches && matches.length === 3) {
-        ext = matches[1];
-        buffer = Buffer.from(matches[2], "base64");
-      } else {
-        buffer = Buffer.from(coverBase64, "base64");
-      }
-
-      // Delete old cover if custom
-      if (addon.coverUrl && addon.coverUrl.startsWith("/uploads/covers/")) {
-        const oldCoverPath = path.join(process.cwd(), addon.coverUrl);
-        if (fs.existsSync(oldCoverPath)) {
-          try { fs.unlinkSync(oldCoverPath); } catch (e) {}
-        }
-      }
-
-      const coverFilename = `cover-${id}.${ext}`;
-      fs.writeFileSync(path.join(COVERS_DIR, coverFilename), buffer);
-      addon.coverUrl = `/uploads/covers/${coverFilename}`;
+      updates.coverBase64 = coverBase64;
+      updates.coverUrl = `/api/addons/${id}/cover`;
     }
 
     if (fileBase64 && fileName) {
-      const matches = fileBase64.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
-      let buffer: Buffer;
+      updates.fileName = fileName;
+      updates.fileSize = fileSize || "1.0 MB";
+      updates.fileUrl = `/api/addons/${id}/download`;
 
-      if (matches && matches.length === 3) {
-        buffer = Buffer.from(matches[2], "base64");
-      } else {
-        buffer = Buffer.from(fileBase64, "base64");
+      // Clean old chunks from Firestore before uploading new ones
+      const chunksRef = collection(db, "addons", id, "chunks");
+      const chunksSnap = await getDocs(chunksRef);
+      for (const chunkDoc of chunksSnap.docs) {
+        await deleteDoc(chunkDoc.ref);
       }
 
-      // Delete old file if exists
-      const oldSafeFileName = addon.fileName.replace(/[^a-zA-Z0-9.\-_]/g, "_");
-      const oldFilePath = path.join(FILES_DIR, `${id}-${oldSafeFileName}`);
-      if (fs.existsSync(oldFilePath)) {
-        try { fs.unlinkSync(oldFilePath); } catch (e) {}
-      } else {
-        const rawOldPath = path.join(FILES_DIR, `${id}-${addon.fileName}`);
-        if (fs.existsSync(rawOldPath)) {
-          try { fs.unlinkSync(rawOldPath); } catch (e) {}
-        }
+      // Write new chunks
+      const CHUNK_SIZE = 500 * 1024; // 500KB chunks
+      let index = 0;
+      for (let i = 0; i < fileBase64.length; i += CHUNK_SIZE) {
+        const chunkData = fileBase64.slice(i, i + CHUNK_SIZE);
+        const chunkRef = doc(db, "addons", id, "chunks", `chunk-${index}`);
+        await setDoc(chunkRef, {
+          index,
+          data: chunkData
+        });
+        index++;
       }
-
-      const safeFileName = fileName.replace(/[^a-zA-Z0-9.\-_]/g, "_");
-      fs.writeFileSync(path.join(FILES_DIR, `${id}-${safeFileName}`), buffer);
-      addon.fileName = fileName;
-      addon.fileSize = fileSize || "1.0 MB";
-      addon.fileUrl = `/api/addons/${id}/download`;
     }
 
-    saveAddons(addons);
-    res.json(addon);
+    await updateDoc(addonRef, updates);
+
+    // Retrieve fully updated document
+    const updatedSnap = await getDoc(addonRef);
+    const fullUpdated = updatedSnap.data();
+
+    // Clean lightweight copy to return to client
+    if (fullUpdated) {
+      delete fullUpdated.coverBase64;
+    }
+
+    res.json(fullUpdated);
   } catch (error: any) {
     console.error("Error updating addon:", error);
     res.status(500).json({ error: "Gagal memperbarui add-on: " + error.message });
@@ -464,40 +533,28 @@ app.put("/api/addons/:id", (req, res) => {
 });
 
 // API: Delete an existing addon
-app.delete("/api/addons/:id", (req, res) => {
+app.delete("/api/addons/:id", async (req, res) => {
   try {
+    if (!db) {
+      return res.status(500).json({ error: "Database tidak terhubung." });
+    }
     const { id } = req.params;
-    const addons = getAddons();
-    const addonIndex = addons.findIndex((a) => a.id === id);
+    const addonRef = doc(db, "addons", id);
+    const docSnap = await getDoc(addonRef);
 
-    if (addonIndex === -1) {
+    if (!docSnap.exists()) {
       return res.status(404).json({ error: "Add-on tidak ditemukan." });
     }
 
-    const addon = addons[addonIndex];
-
-    // Delete cover file if exists
-    if (addon.coverUrl && addon.coverUrl.startsWith("/uploads/covers/")) {
-      const coverPath = path.join(process.cwd(), addon.coverUrl);
-      if (fs.existsSync(coverPath)) {
-        try { fs.unlinkSync(coverPath); } catch (e) {}
-      }
+    // First delete all file chunks subcollection
+    const chunksRef = collection(db, "addons", id, "chunks");
+    const chunksSnap = await getDocs(chunksRef);
+    for (const chunkDoc of chunksSnap.docs) {
+      await deleteDoc(chunkDoc.ref);
     }
 
-    // Delete addon file if exists
-    const safeFileName = addon.fileName.replace(/[^a-zA-Z0-9.\-_]/g, "_");
-    const filePath = path.join(FILES_DIR, `${id}-${safeFileName}`);
-    if (fs.existsSync(filePath)) {
-      try { fs.unlinkSync(filePath); } catch (e) {}
-    } else {
-      const rawFilePath = path.join(FILES_DIR, `${id}-${addon.fileName}`);
-      if (fs.existsSync(rawFilePath)) {
-        try { fs.unlinkSync(rawFilePath); } catch (e) {}
-      }
-    }
-
-    addons.splice(addonIndex, 1);
-    saveAddons(addons);
+    // Delete parent addon metadata document
+    await deleteDoc(addonRef);
 
     res.json({ success: true, message: "Add-on berhasil dihapus." });
   } catch (error: any) {
@@ -528,3 +585,4 @@ async function startServer() {
 }
 
 startServer();
+
