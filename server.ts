@@ -306,14 +306,21 @@ app.get("/api/addons/:id/download", (req, res) => {
     saveAddons(addons);
 
     // Look for the file on disk
-    // In seed data: file is addon.fileName
-    // In user uploaded data: file is `${addon.id}-${addon.fileName}`
-    let filePath = path.join(FILES_DIR, addon.fileName);
+    // 1. First check with the sanitized filename format (how uploads are written to disk)
+    const safeFileName = addon.fileName.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+    let filePath = path.join(FILES_DIR, `${addon.id}-${safeFileName}`);
+    
+    // 2. Second check with the raw `${id}-${fileName}` format as fallback
     if (!fs.existsSync(filePath)) {
       filePath = path.join(FILES_DIR, `${addon.id}-${addon.fileName}`);
     }
+    
+    // 3. Third check with just addon.fileName as fallback
+    if (!fs.existsSync(filePath)) {
+      filePath = path.join(FILES_DIR, addon.fileName);
+    }
 
-    // If still not exist, write a mock text file dynamically so the download succeeds!
+    // If still not exist, write a fallback text file dynamically so the download doesn't crash completely
     if (!fs.existsSync(filePath)) {
       fs.writeFileSync(filePath, `// GL COM Minecraft Add-on File\n// Name: ${addon.name}\n// Direct download without ads!\n// ID: ${addon.id}`);
     }
