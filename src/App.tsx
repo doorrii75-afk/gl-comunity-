@@ -186,40 +186,6 @@ export default function App() {
       <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-emerald-500/5 rounded-full filter blur-3xl pointer-events-none -z-10" />
       <div className="absolute bottom-1/3 right-1/4 w-[600px] h-[600px] bg-blue-500/5 rounded-full filter blur-3xl pointer-events-none -z-10" />
 
-      {/* Modern Header / Navigation bar */}
-      <header id="glcom-navbar" className="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-md border-b border-slate-900/80 px-4 md:px-8 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3 select-none">
-            {/* Minecraft style green glow logo block */}
-            <div className="w-9 h-9 rounded-xl bg-emerald-500 flex items-center justify-center font-display font-black text-slate-950 text-xl shadow-lg shadow-emerald-500/25">
-              GL
-            </div>
-            <div>
-              <span className="font-display font-black text-xl tracking-wider bg-gradient-to-r from-emerald-400 to-emerald-200 bg-clip-text text-transparent">
-                GL COM
-              </span>
-              <span className="block text-[9px] font-mono tracking-widest text-emerald-500 font-bold -mt-1">
-                MC ADD-ON CENTER
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-            {/* Minimal Stat Box */}
-            <div className="hidden sm:flex items-center gap-2 bg-slate-900/60 border border-slate-800 px-3 py-1.5 rounded-xl text-xs font-mono">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-slate-400">Database:</span>
-              <span className="text-emerald-400 font-bold">{addons.length} Add-on</span>
-            </div>
-
-            {/* Admin Badge */}
-            <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg">
-              DIRECT DOWNLOADS • 100% AD-FREE
-            </div>
-          </div>
-        </div>
-      </header>
-
       {/* Main Content Area */}
       <main id="glcom-main-content" className="flex-1 w-full max-w-7xl mx-auto px-4 md:px-8 py-6">
         
