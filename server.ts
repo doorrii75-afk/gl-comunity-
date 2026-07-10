@@ -370,6 +370,142 @@ app.post("/api/addons/:id/comments", (req, res) => {
   }
 });
 
+// API: Update an existing addon
+app.put("/api/addons/:id", (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      name,
+      description,
+      category,
+      compatibleVersion,
+      author,
+      coverBase64,
+      fileBase64,
+      fileName,
+      fileSize
+    } = req.body;
+
+    const addons = getAddons();
+    const addonIndex = addons.findIndex((a) => a.id === id);
+
+    if (addonIndex === -1) {
+      return res.status(404).json({ error: "Add-on tidak ditemukan." });
+    }
+
+    const addon = addons[addonIndex];
+
+    if (name) addon.name = name;
+    if (description) addon.description = description;
+    if (category) addon.category = category;
+    if (compatibleVersion) addon.compatibleVersion = compatibleVersion;
+    if (author !== undefined) addon.author = author || "Admin";
+
+    if (coverBase64) {
+      const matches = coverBase64.match(/^data:image\/([A-Za-z-+]+);base64,(.+)$/);
+      let ext = "png";
+      let buffer: Buffer;
+
+      if (matches && matches.length === 3) {
+        ext = matches[1];
+        buffer = Buffer.from(matches[2], "base64");
+      } else {
+        buffer = Buffer.from(coverBase64, "base64");
+      }
+
+      // Delete old cover if custom
+      if (addon.coverUrl && addon.coverUrl.startsWith("/uploads/covers/")) {
+        const oldCoverPath = path.join(process.cwd(), addon.coverUrl);
+        if (fs.existsSync(oldCoverPath)) {
+          try { fs.unlinkSync(oldCoverPath); } catch (e) {}
+        }
+      }
+
+      const coverFilename = `cover-${id}.${ext}`;
+      fs.writeFileSync(path.join(COVERS_DIR, coverFilename), buffer);
+      addon.coverUrl = `/uploads/covers/${coverFilename}`;
+    }
+
+    if (fileBase64 && fileName) {
+      const matches = fileBase64.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+      let buffer: Buffer;
+
+      if (matches && matches.length === 3) {
+        buffer = Buffer.from(matches[2], "base64");
+      } else {
+        buffer = Buffer.from(fileBase64, "base64");
+      }
+
+      // Delete old file if exists
+      const oldSafeFileName = addon.fileName.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+      const oldFilePath = path.join(FILES_DIR, `${id}-${oldSafeFileName}`);
+      if (fs.existsSync(oldFilePath)) {
+        try { fs.unlinkSync(oldFilePath); } catch (e) {}
+      } else {
+        const rawOldPath = path.join(FILES_DIR, `${id}-${addon.fileName}`);
+        if (fs.existsSync(rawOldPath)) {
+          try { fs.unlinkSync(rawOldPath); } catch (e) {}
+        }
+      }
+
+      const safeFileName = fileName.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+      fs.writeFileSync(path.join(FILES_DIR, `${id}-${safeFileName}`), buffer);
+      addon.fileName = fileName;
+      addon.fileSize = fileSize || "1.0 MB";
+      addon.fileUrl = `/api/addons/${id}/download`;
+    }
+
+    saveAddons(addons);
+    res.json(addon);
+  } catch (error: any) {
+    console.error("Error updating addon:", error);
+    res.status(500).json({ error: "Gagal memperbarui add-on: " + error.message });
+  }
+});
+
+// API: Delete an existing addon
+app.delete("/api/addons/:id", (req, res) => {
+  try {
+    const { id } = req.params;
+    const addons = getAddons();
+    const addonIndex = addons.findIndex((a) => a.id === id);
+
+    if (addonIndex === -1) {
+      return res.status(404).json({ error: "Add-on tidak ditemukan." });
+    }
+
+    const addon = addons[addonIndex];
+
+    // Delete cover file if exists
+    if (addon.coverUrl && addon.coverUrl.startsWith("/uploads/covers/")) {
+      const coverPath = path.join(process.cwd(), addon.coverUrl);
+      if (fs.existsSync(coverPath)) {
+        try { fs.unlinkSync(coverPath); } catch (e) {}
+      }
+    }
+
+    // Delete addon file if exists
+    const safeFileName = addon.fileName.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+    const filePath = path.join(FILES_DIR, `${id}-${safeFileName}`);
+    if (fs.existsSync(filePath)) {
+      try { fs.unlinkSync(filePath); } catch (e) {}
+    } else {
+      const rawFilePath = path.join(FILES_DIR, `${id}-${addon.fileName}`);
+      if (fs.existsSync(rawFilePath)) {
+        try { fs.unlinkSync(rawFilePath); } catch (e) {}
+      }
+    }
+
+    addons.splice(addonIndex, 1);
+    saveAddons(addons);
+
+    res.json({ success: true, message: "Add-on berhasil dihapus." });
+  } catch (error: any) {
+    console.error("Error deleting addon:", error);
+    res.status(500).json({ error: "Gagal menghapus add-on: " + error.message });
+  }
+});
+
 // Vite Integration
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {

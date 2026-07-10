@@ -138,6 +138,47 @@ export default function App() {
     }
   };
 
+  // Handle deleting an addon
+  const handleDeleteAddon = async (addonId: string): Promise<void> => {
+    try {
+      const response = await fetch(`/api/addons/${addonId}`, {
+        method: "DELETE"
+      });
+      if (!response.ok) {
+        throw new Error("Gagal menghapus add-on dari server database.");
+      }
+      setAddons((prev) => prev.filter((a) => a.id !== addonId));
+      setSelectedAddon(null);
+    } catch (err: any) {
+      console.error(err);
+      throw new Error(err.message || "Gagal menghapus.");
+    }
+  };
+
+  // Handle editing/updating an addon
+  const handleEditAddon = async (addonId: string, updatedFields: any): Promise<boolean> => {
+    try {
+      const response = await fetch(`/api/addons/${addonId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(updatedFields)
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Gagal memperbarui add-on.");
+      }
+      const updatedAddon = await response.json();
+      setAddons((prev) => prev.map((a) => (a.id === addonId ? updatedAddon : a)));
+      setSelectedAddon(updatedAddon);
+      return true;
+    } catch (err: any) {
+      console.error(err);
+      throw new Error(err.message || "Gagal memperbarui.");
+    }
+  };
+
   // Upload complete handler
   const handleUploadSuccess = () => {
     fetchAddons();
@@ -645,6 +686,9 @@ export default function App() {
             onClose={() => setSelectedAddon(null)}
             onDownload={handleDownload}
             onAddComment={handleAddComment}
+            isAdminVerified={isAdminVerified}
+            onEditAddon={handleEditAddon}
+            onDeleteAddon={handleDeleteAddon}
           />
         )}
       </AnimatePresence>
