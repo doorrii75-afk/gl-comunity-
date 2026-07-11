@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Home, FolderHeart, Search, PlusCircle, Compass, Gamepad2, Sparkles, Sliders, ChevronRight, Download, Eye, AlertCircle, Lock, KeyRound, ShieldAlert, Globe } from "lucide-react";
+import { Home, FolderHeart, Search, PlusCircle, Compass, Gamepad2, Sparkles, Sliders, ChevronRight, Download, Eye, AlertCircle, Lock, KeyRound, ShieldAlert, Globe, Bell, Trash2, Check, CheckCheck, X } from "lucide-react";
 
 import { Addon, Comment } from "./types";
 import AddonSlider from "./components/AddonSlider";
@@ -109,6 +109,132 @@ export default function App() {
 
   const categories = ["Semua", "Survival", "Kreatif", "Transportasi", "Petualangan", "Alat (Tools)", "Skin", "Lainnya"];
 
+  // Real-time Notification States & Audio Synthesizer
+  const [notifications, setNotifications] = useState<any[]>(() => {
+    try {
+      const saved = localStorage.getItem("glcom_notifications");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [activeToasts, setActiveToasts] = useState<any[]>([]);
+  const [isNotifDropdownOpen, setIsNotifDropdownOpen] = useState(false);
+  const seenAddonIdsRef = React.useRef<Set<string>>(new Set());
+  const isInitialLoadRef = React.useRef(true);
+
+  // Play beautiful mobile-style synth notification chime
+  const playNotificationSound = () => {
+    try {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) return;
+      const ctx = new AudioContextClass();
+      
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5 Note
+      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.1); // A5 Note
+      
+      gain.gain.setValueAtTime(0.12, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+      
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      osc.start();
+      osc.stop(ctx.currentTime + 0.5);
+    } catch (err) {
+      console.warn("AudioContext failed:", err);
+    }
+  };
+
+  // Trigger notification and add to feed + toast alerts
+  const triggerNewAddonNotification = (addon: Addon) => {
+    playNotificationSound();
+
+    const notifId = `notif-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const newNotif = {
+      id: notifId,
+      addonId: addon.id,
+      title: "Add-on Baru Dirilis!",
+      message: `"${addon.name}" baru saja diunggah oleh ${addon.author} di kategori ${addon.category}.`,
+      category: addon.category,
+      createdAt: new Date().toISOString(),
+      read: false,
+      addon: addon
+    };
+
+    setNotifications(prev => {
+      const updated = [newNotif, ...prev];
+      localStorage.setItem("glcom_notifications", JSON.stringify(updated));
+      return updated;
+    });
+
+    const toastId = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+    setActiveToasts(prev => [...prev, {
+      id: toastId,
+      title: "🎉 Add-on Baru!",
+      message: `"${addon.name}" oleh ${addon.author}`,
+      addon: addon
+    }]);
+
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+      setActiveToasts(prev => prev.filter(t => t.id !== toastId));
+    }, 5000);
+  };
+
+  // Simulated test notification
+  const triggerSimulatedNotification = () => {
+    playNotificationSound();
+    
+    const randomAddon = addons.length > 0 
+      ? addons[Math.floor(Math.random() * addons.length)]
+      : {
+          id: "simulated-addon",
+          name: "Mech Warriors Addon",
+          author: "AlexCraft",
+          category: "Survival",
+          compatibleVersion: "1.21.x",
+          description: "Sebuah add-on simulasi untuk mengetes notifikasi.",
+          createdAt: new Date().toISOString()
+        };
+
+    const notifId = `notif-sim-${Date.now()}`;
+    const newNotif = {
+      id: notifId,
+      addonId: randomAddon.id,
+      title: "Add-on Baru Dirilis! (Simulasi)",
+      message: `"${randomAddon.name}" baru saja diunggah oleh ${randomAddon.author} di kategori ${randomAddon.category}.`,
+      category: randomAddon.category,
+      createdAt: new Date().toISOString(),
+      read: false,
+      addon: randomAddon,
+      isSimulation: true
+    };
+
+    setNotifications(prev => {
+      const updated = [newNotif, ...prev];
+      localStorage.setItem("glcom_notifications", JSON.stringify(updated));
+      return updated;
+    });
+
+    const toastId = `toast-sim-${Date.now()}`;
+    setActiveToasts(prev => [...prev, {
+      id: toastId,
+      title: "🔔 Simulasi Add-on!",
+      message: `"${randomAddon.name}" oleh ${randomAddon.author}`,
+      addon: randomAddon,
+      isSimulation: true
+    }]);
+
+    setTimeout(() => {
+      setActiveToasts(prev => prev.filter(t => t.id !== toastId));
+    }, 5000);
+  };
+
   // Fetch database status and quota information
   const fetchDbStatus = async () => {
     try {
@@ -139,6 +265,26 @@ export default function App() {
       }
       const data = await response.json();
       setAddons(data);
+      
+      // Real-time detection of newly added addons
+      if (data && Array.isArray(data)) {
+        if (isInitialLoadRef.current) {
+          // It's the first fetch, populate the seen list without firing notifications
+          const initialSet = new Set<string>();
+          data.forEach((addon: Addon) => initialSet.add(addon.id));
+          seenAddonIdsRef.current = initialSet;
+          isInitialLoadRef.current = false;
+        } else {
+          // Subsequent fetch, check for truly new uploads
+          const newItems = data.filter((addon: Addon) => !seenAddonIdsRef.current.has(addon.id));
+          if (newItems.length > 0) {
+            newItems.forEach((addon: Addon) => {
+              seenAddonIdsRef.current.add(addon.id);
+              triggerNewAddonNotification(addon);
+            });
+          }
+        }
+      }
       
       // Update selected addon if currently open to ensure real-time comments and download counts
       setSelectedAddon((curr) => {
@@ -444,8 +590,281 @@ export default function App() {
         ))}
       </div>
       
-      {/* Top spacer instead of header */}
-      <div className="pt-6" />
+      {/* Dynamic Top Navigation & Notification Header */}
+      <header className="sticky top-0 z-40 w-full bg-slate-950/70 backdrop-blur-md border-b border-slate-900/80 py-4 px-4 md:px-8">
+        <div className="max-w-7xl mx-auto flex items-center justify-between relative">
+          
+          {/* Logo & Brand Info */}
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-emerald-400 flex items-center justify-center font-display font-black text-slate-950 shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+                GL
+              </div>
+              <span className="absolute -bottom-0.5 -right-0.5 flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+              </span>
+            </div>
+            
+            <div>
+              <h1 className="text-sm font-display font-black tracking-wider text-slate-100 uppercase">
+                GL Addon Store
+              </h1>
+              <p className="text-[10px] font-mono text-slate-500">
+                Minecraft Bedrock Edition
+              </p>
+            </div>
+          </div>
+
+          {/* Right Section: Notification Panel Control */}
+          <div className="relative">
+            <button
+              onClick={() => setIsNotifDropdownOpen(!isNotifDropdownOpen)}
+              className={`relative p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-center ${
+                isNotifDropdownOpen
+                  ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                  : "bg-slate-900 hover:bg-slate-850 border-slate-800 text-slate-400 hover:text-slate-200"
+              }`}
+              title="Notifikasi"
+            >
+              <Bell size={18} className={notifications.some(n => !n.read) ? "animate-bounce" : ""} />
+              
+              {/* Unread dot indicator with spring animation */}
+              <AnimatePresence>
+                {notifications.some(n => !n.read) && (
+                  <motion.span
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    exit={{ scale: 0 }}
+                    className="absolute top-1.5 right-1.5 flex h-3 w-3"
+                  >
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500 border border-slate-950"></span>
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </button>
+
+            {/* Notification Dropdown Menu */}
+            <AnimatePresence>
+              {isNotifDropdownOpen && (
+                <>
+                  {/* Backdrop click barrier */}
+                  <div 
+                    className="fixed inset-0 z-30" 
+                    onClick={() => setIsNotifDropdownOpen(false)} 
+                  />
+                  
+                  <motion.div
+                    initial={{ opacity: 0, y: 15, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 15, scale: 0.95 }}
+                    transition={{ type: "spring", stiffness: 350, damping: 24 }}
+                    className="absolute right-0 mt-3 z-40 w-80 sm:w-96 bg-slate-950/95 border border-slate-800/80 rounded-2xl shadow-2xl backdrop-blur-xl overflow-hidden p-1 flex flex-col text-left"
+                  >
+                    {/* Panel Header */}
+                    <div className="p-4 border-b border-slate-900/60 flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-mono font-bold uppercase tracking-wide text-slate-400">Pemberitahuan</span>
+                        {notifications.filter(n => !n.read).length > 0 && (
+                          <span className="bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md">
+                            {notifications.filter(n => !n.read).length} Baru
+                          </span>
+                        )}
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        {notifications.length > 0 && (
+                          <button
+                            onClick={() => {
+                              const updated = notifications.map(n => ({ ...n, read: true }));
+                              setNotifications(updated);
+                              localStorage.setItem("glcom_notifications", JSON.stringify(updated));
+                            }}
+                            className="text-[10px] font-mono text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                            title="Tandai semua dibaca"
+                          >
+                            <CheckCheck size={11} />
+                            Baca Semua
+                          </button>
+                        )}
+                        <span className="text-slate-800">|</span>
+                        <button
+                          onClick={triggerSimulatedNotification}
+                          className="text-[10px] font-mono text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                          title="Simulasi notifikasi add-on baru"
+                        >
+                          Simulasi
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Notification Feed */}
+                    <div className="max-h-80 overflow-y-auto no-scrollbar flex-1 divide-y divide-slate-950">
+                      {notifications.length === 0 ? (
+                        <div className="py-12 px-4 flex flex-col items-center justify-center text-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-slate-900 border border-slate-800/60 flex items-center justify-center text-slate-600">
+                            <Bell size={18} />
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-slate-400">Belum ada notifikasi</p>
+                            <p className="text-[10px] text-slate-600 mt-1">Anda akan menerima pemberitahuan instan saat add-on baru diunggah oleh komunitas.</p>
+                          </div>
+                        </div>
+                      ) : (
+                        notifications.map((notif) => (
+                          <div
+                            key={notif.id}
+                            className={`p-3.5 flex gap-3 transition-colors hover:bg-slate-900/40 relative ${
+                              !notif.read ? "bg-emerald-500/[0.02]" : ""
+                            }`}
+                          >
+                            {/* Blue dot indicator for unread */}
+                            {!notif.read && (
+                              <span className="absolute top-4 left-2.5 h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                            )}
+                            
+                            {/* Icon or Thumbnail */}
+                            <div className="w-9 h-9 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0 text-emerald-400">
+                              <Sparkles size={16} />
+                            </div>
+
+                            {/* Message detail */}
+                            <div className="flex-1 min-w-0 space-y-1">
+                              <div className="flex items-center justify-between gap-2">
+                                <span className={`text-[10px] font-mono uppercase font-bold tracking-wide ${
+                                  notif.isSimulation ? "text-amber-400" : "text-emerald-500"
+                                }`}>
+                                  {notif.category || "Addon baru"}
+                                </span>
+                                <span className="text-[9px] font-mono text-slate-600 shrink-0">
+                                  {new Date(notif.createdAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
+                                </span>
+                              </div>
+                              <h5 className="text-xs font-bold text-slate-200 leading-snug">
+                                {notif.title}
+                              </h5>
+                              <p className="text-[11px] text-slate-400 leading-normal break-words">
+                                {notif.message}
+                              </p>
+                              
+                              {/* Open detail trigger */}
+                              {notif.addon && (
+                                <button
+                                  onClick={() => {
+                                    // Mark single notification as read
+                                    const updated = notifications.map(n => n.id === notif.id ? { ...n, read: true } : n);
+                                    setNotifications(updated);
+                                    localStorage.setItem("glcom_notifications", JSON.stringify(updated));
+                                    
+                                    // Open detail modal
+                                    setSelectedAddon(notif.addon);
+                                    setIsNotifDropdownOpen(false);
+                                  }}
+                                  className="text-[10px] font-mono text-emerald-400 font-bold hover:underline transition-all pt-1 flex items-center gap-1 cursor-pointer"
+                                >
+                                  Lihat Detail Add-on &rarr;
+                                </button>
+                              )}
+                            </div>
+
+                            {/* Delete specific notification */}
+                            <button
+                              onClick={() => {
+                                const updated = notifications.filter(n => n.id !== notif.id);
+                                setNotifications(updated);
+                                localStorage.setItem("glcom_notifications", JSON.stringify(updated));
+                              }}
+                              className="text-slate-700 hover:text-slate-400 p-1 rounded-md self-start transition-colors cursor-pointer"
+                              title="Hapus"
+                            >
+                              <X size={11} />
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+
+                    {/* Footer Clear All */}
+                    {notifications.length > 0 && (
+                      <div className="p-2 bg-slate-950 border-t border-slate-900/60 flex items-center justify-end">
+                        <button
+                          onClick={() => {
+                            setNotifications([]);
+                            localStorage.setItem("glcom_notifications", JSON.stringify([]));
+                          }}
+                          className="text-[10px] font-mono text-rose-400 hover:text-rose-300 font-bold px-2.5 py-1.5 rounded-lg hover:bg-rose-500/5 transition-colors flex items-center gap-1 cursor-pointer"
+                        >
+                          <Trash2 size={11} />
+                          Bersihkan Semua
+                        </button>
+                      </div>
+                    )}
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+      </header>
+
+      {/* Floating Toast notifications container */}
+      <div className="fixed top-24 right-4 z-50 flex flex-col gap-3 pointer-events-none max-w-sm w-[92%] sm:w-full">
+        <AnimatePresence>
+          {activeToasts.map((toast) => (
+            <motion.div
+              key={toast.id}
+              initial={{ opacity: 0, x: 50, scale: 0.9 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: 50, scale: 0.9 }}
+              className="pointer-events-auto bg-slate-950/95 border border-slate-800/80 rounded-2xl p-4 shadow-2xl backdrop-blur-xl flex gap-3 relative overflow-hidden text-left"
+            >
+              {/* Green glowing accent strip */}
+              <div className={`absolute left-0 top-0 bottom-0 w-1 ${
+                toast.isSimulation ? "bg-amber-400" : "bg-emerald-500 animate-pulse"
+              }`} />
+              
+              <div className="p-2 bg-slate-900 border border-slate-800 rounded-xl text-emerald-400 shrink-0 self-start">
+                <Bell size={18} className="animate-bounce" />
+              </div>
+              
+              <div className="flex-1 space-y-1">
+                <h4 className="text-xs font-mono font-bold tracking-wide uppercase text-slate-500">
+                  {toast.isSimulation ? "🔔 Simulasi Notifikasi" : "🎉 Rilisan Baru!"}
+                </h4>
+                <p className="text-xs font-bold text-slate-100 leading-snug">
+                  {toast.title}
+                </p>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  {toast.message}
+                </p>
+                
+                {toast.addon && (
+                  <div className="pt-2">
+                    <button
+                      onClick={() => {
+                        setSelectedAddon(toast.addon);
+                        // Dismiss toast instantly
+                        setActiveToasts(prev => prev.filter(t => t.id !== toast.id));
+                      }}
+                      className="text-[10px] font-mono font-bold text-emerald-400 hover:text-emerald-300 hover:underline cursor-pointer"
+                    >
+                      Buka Sekarang &rarr;
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={() => setActiveToasts(prev => prev.filter(t => t.id !== toast.id))}
+                className="text-slate-600 hover:text-slate-400 p-1 rounded-lg self-start cursor-pointer"
+              >
+                <X size={14} />
+              </button>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
       
       {/* Database Quota Warning Banner */}
       {dbStatus?.isFirestoreExhausted && (
