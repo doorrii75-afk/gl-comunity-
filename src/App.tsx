@@ -273,33 +273,8 @@ export default function App() {
   return (
     <div id="glcom-root-layout" className="min-h-screen flex flex-col relative pb-32">
       
-      {/* Premium Top Navigation Bar */}
-      <header className="w-full bg-slate-950/60 backdrop-blur-md border-b border-slate-900 sticky top-0 z-40 transition-all">
-        <div className="max-w-7xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-500 flex items-center justify-center text-slate-950 font-black tracking-tight shadow-md shadow-emerald-500/10">
-              GL
-            </div>
-            <div>
-              <span className="text-sm font-display font-black text-slate-100 tracking-tight uppercase block">
-                GL COM <span className="text-emerald-400">Addon Hub</span>
-              </span>
-              <span className="hidden sm:block text-[9px] text-slate-500 font-mono">Ver 2.5 • Portal Minecraft Terpercaya</span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {/* Real-time Online status indicator */}
-            <div className="bg-slate-900/80 border border-slate-800/80 rounded-full px-3 py-1 flex items-center gap-1.5 text-[10px] font-mono text-slate-400 font-bold shadow-sm">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-              </span>
-              <span>Modrinth Online Active</span>
-            </div>
-          </div>
-        </div>
-      </header>
+      {/* Top spacer instead of header */}
+      <div className="pt-6" />
       
       {/* Database Quota Warning Banner */}
       {dbStatus?.isFirestoreExhausted && (

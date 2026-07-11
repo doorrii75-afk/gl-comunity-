@@ -266,40 +266,25 @@ export default function ModrinthExplore() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto px-1 md:px-0" id="modrinth-explore-interactive">
       
-      {/* Header Banner Section */}
-      <div className="relative bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950/25 border border-slate-800/80 rounded-3xl p-6 md:p-8 overflow-hidden shadow-2xl">
-        <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-emerald-500/10 rounded-full filter blur-3xl pointer-events-none -z-10" />
-        <div className="absolute -bottom-20 left-1/4 w-[300px] h-[300px] bg-blue-500/5 rounded-full filter blur-3xl pointer-events-none -z-10" />
+      {/* Header Banner Section - Clean, Slim, and Compact Search-Only Bar */}
+      <div className="relative bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950/15 border border-slate-800/60 rounded-2xl p-4 overflow-hidden shadow-xl">
+        <div className="absolute top-0 right-0 w-[200px] h-[200px] bg-emerald-500/5 rounded-full filter blur-3xl pointer-events-none -z-10" />
 
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
-          <div className="space-y-3 max-w-2xl">
-            <div className="inline-flex items-center gap-2 bg-emerald-500/15 border border-emerald-500/30 px-3.5 py-1.5 rounded-full text-[10px] font-mono text-emerald-400 font-bold uppercase tracking-wider shadow-sm">
-              <Sparkles size={11} className="animate-pulse text-emerald-300" />
-              Database Modrinth Terintegrasi • 100K+ Berkas
-            </div>
-            <h2 className="text-2xl md:text-4xl font-display font-black text-slate-100 tracking-tight leading-tight">
-              Eksplorasi Mod & Add-on <span className="text-emerald-400 block sm:inline">Raksasa</span>
-            </h2>
-            <p className="text-xs md:text-sm text-slate-400 leading-relaxed">
-              Cari apa saja yang kamu impikan — mod petualangan, shader ultra realistis, pack tekstur keren, hingga datapack kustom. Unduh langsung secara instan tanpa ribet!
-            </p>
-          </div>
-
-          {/* Quick Search Input with Super Smooth Styling */}
-          <form onSubmit={handleSearchSubmit} className="relative w-full md:max-w-sm shrink-0">
+        <div className="relative z-10">
+          <form onSubmit={handleSearchSubmit} className="relative w-full">
             <div className="relative group">
               <input
                 type="text"
                 id="modrinth-search-input"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Cari shader, mob, modpack..."
-                className="w-full bg-slate-950 border border-slate-800/80 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 text-slate-200 placeholder-slate-600 rounded-2xl pl-11 pr-20 py-4 text-xs outline-none transition-all font-semibold shadow-inner"
+                placeholder="Cari shader, mob, modpack online..."
+                className="w-full bg-slate-950 border border-slate-800/80 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 text-slate-200 placeholder-slate-600 rounded-xl pl-11 pr-20 py-3.5 text-xs outline-none transition-all font-semibold shadow-inner"
               />
               <Search size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-emerald-400 transition-colors" />
               <button
                 type="submit"
-                className="absolute right-2 top-1/2 -translate-y-1/2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-4 py-2.5 rounded-xl text-[11px] font-bold font-mono transition-all active:scale-95 cursor-pointer shadow-lg shadow-emerald-500/20"
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-4 py-2 rounded-lg text-[11px] font-bold font-mono transition-all active:scale-95 cursor-pointer shadow-lg shadow-emerald-500/20"
               >
                 CARI
               </button>
