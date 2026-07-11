@@ -3,9 +3,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Search, Download, Eye, Globe, ArrowLeft, Loader2, Sparkles, AlertCircle, BookOpen, Clock, Tag, ShieldCheck, Heart } from "lucide-react";
+import { 
+  Search, Download, Eye, Globe, ArrowLeft, Loader2, Sparkles, 
+  AlertCircle, BookOpen, Clock, Tag, ShieldCheck, Filter, 
+  SlidersHorizontal, ChevronDown, Check, ArrowUpDown, Layers,
+  Compass, RefreshCw, Cpu
+} from "lucide-react";
 
 interface ModrinthProject {
   project_id: string;
@@ -40,45 +45,138 @@ interface ModrinthVersion {
   date_published: string;
 }
 
+const PROJECT_TYPES = [
+  { id: "all", label: "Semua Kategori", icon: Layers },
+  { id: "mod", label: "Modifikasi Game", icon: Cpu },
+  { id: "resourcepack", label: "Tekstur & Resource", icon: Sparkles },
+  { id: "shader", label: "Shader Grafik", icon: Globe },
+  { id: "datapack", label: "Datapack Dunia", icon: Compass }
+];
+
+const CATEGORIES = [
+  { id: "all", label: "Semua Tema" },
+  { id: "adventure", label: "RPG & Petualangan" },
+  { id: "technology", label: "Teknologi & Industri" },
+  { id: "magic", label: "Sihir & Fantasi" },
+  { id: "decoration", label: "Furnitur & Dekorasi" },
+  { id: "optimization", label: "Optimasi & FPS" },
+  { id: "utility", label: "Alat & Utilitas" },
+  { id: "worldgen", label: "Dunia & Struktur" },
+  { id: "storage", label: "Penyimpanan" }
+];
+
+const SORT_OPTIONS = [
+  { id: "downloads", label: "Paling Populer" },
+  { id: "newest", label: "Rilisan Terbaru" },
+  { id: "updated", label: "Baru Diupdate" },
+  { id: "relevance", label: "Sesuai Pencarian" },
+  { id: "follows", label: "Banyak Diikuti" }
+];
+
 export default function ModrinthExplore() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedProjectType, setSelectedProjectType] = useState("all");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedSort, setSelectedSort] = useState("downloads");
+  
   const [projects, setProjects] = useState<ModrinthProject[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
   
-  // Selected project for detailed modal
+  const [offset, setOffset] = useState(0);
+  const [totalHits, setTotalHits] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+
+  // Filter menu dropdowns for mobile
+  const [showFilters, setShowFilters] = useState(false);
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
+
+  // Selected project modal details
   const [selectedProject, setSelectedProject] = useState<ModrinthProject | null>(null);
   const [versions, setVersions] = useState<ModrinthVersion[]>([]);
   const [loadingVersions, setLoadingVersions] = useState(false);
   const [downloadingVersionId, setDownloadingVersionId] = useState<string | null>(null);
 
-  // Fetch projects from our backend proxy
-  const handleSearch = async (queryStr = "") => {
-    setLoading(true);
-    setError("");
+  const isInitialMount = useRef(true);
+
+  // Main search function
+  const handleSearch = async (isAppend = false) => {
+    if (isAppend) {
+      setLoadingMore(true);
+    } else {
+      setLoading(true);
+      setError("");
+    }
+
     try {
-      const response = await fetch(`/api/modrinth/search?query=${encodeURIComponent(queryStr)}&limit=24`);
+      const limit = 24;
+      const currentOffset = isAppend ? offset + limit : 0;
+      if (!isAppend) {
+        setOffset(0);
+      } else {
+        setOffset(currentOffset);
+      }
+
+      const params = new URLSearchParams({
+        query: searchQuery,
+        limit: limit.toString(),
+        offset: currentOffset.toString(),
+        index: selectedSort,
+        project_type: selectedProjectType,
+        category: selectedCategory
+      });
+
+      const response = await fetch(`/api/modrinth/search?${params.toString()}`);
       if (!response.ok) {
         throw new Error("Gagal mengambil data dari server Modrinth.");
       }
       const data = await response.json();
+      
       if (data && data.hits) {
-        setProjects(data.hits);
+        if (isAppend) {
+          setProjects(prev => [...prev, ...data.hits]);
+        } else {
+          setProjects(data.hits);
+        }
+        setTotalHits(data.total_hits || 0);
+        // If hits returned is less than limit, there are no more results
+        setHasMore(data.hits.length >= limit);
       } else {
-        setProjects([]);
+        if (!isAppend) setProjects([]);
+        setHasMore(false);
       }
     } catch (err: any) {
       console.error(err);
-      setError(err.message || "Gagal memuat daftar add-on online.");
+      setError(err.message || "Gagal memuat daftar add-on.");
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
-  // Initial load with empty query (fetches popular)
+  // Trigger search on filter changes
   useEffect(() => {
-    handleSearch("");
-  }, []);
+    // Avoid double search on initial mount
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      handleSearch(false);
+      return;
+    }
+    handleSearch(false);
+  }, [selectedProjectType, selectedCategory, selectedSort]);
+
+  // Handle manual submit
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSearch(false);
+  };
+
+  // Load more pages
+  const handleLoadMore = () => {
+    if (loadingMore || !hasMore) return;
+    handleSearch(true);
+  };
 
   // Fetch versions when a project is selected
   const handleSelectProject = async (project: ModrinthProject) => {
@@ -99,7 +197,7 @@ export default function ModrinthExplore() {
     }
   };
 
-  // Handle direct file download via proxy
+  // Secure download via backend proxy
   const handleDownloadFile = async (fileUrl: string, filename: string, versionId: string) => {
     setDownloadingVersionId(versionId);
     try {
@@ -127,23 +225,12 @@ export default function ModrinthExplore() {
     }
   };
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    handleSearch(searchQuery);
-  };
-
-  // Helper to format large download counts (e.g. 1500000 -> 1.5M)
   const formatDownloads = (num: number) => {
-    if (num >= 1000000) {
-      return (num / 1000000).toFixed(1) + "M";
-    }
-    if (num >= 1000) {
-      return (num / 1000).toFixed(1) + "K";
-    }
+    if (num >= 1000000) return (num / 1000000).toFixed(1) + "M";
+    if (num >= 1000) return (num / 1000).toFixed(1) + "K";
     return num.toString();
   };
 
-  // Helper to format file size in MB/KB
   const formatBytes = (bytes: number) => {
     if (bytes === 0) return "0 B";
     const k = 1024;
@@ -153,142 +240,286 @@ export default function ModrinthExplore() {
   };
 
   return (
-    <div className="space-y-6 md:space-y-8" id="modrinth-explore-container">
-      {/* Premium Ambient Glowing Banner */}
-      <div className="relative bg-gradient-to-r from-slate-900 via-slate-900 to-emerald-950/20 border border-slate-800/80 rounded-3xl p-6 md:p-8 overflow-hidden shadow-xl">
-        <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-emerald-500/10 rounded-full filter blur-3xl pointer-events-none -z-10" />
-        <div className="absolute -bottom-10 left-1/3 w-[200px] h-[200px] bg-blue-500/5 rounded-full filter blur-3xl pointer-events-none -z-10" />
+    <div className="space-y-6 max-w-7xl mx-auto px-1 md:px-0" id="modrinth-explore-interactive">
+      
+      {/* Header Banner Section */}
+      <div className="relative bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950/25 border border-slate-800/80 rounded-3xl p-6 md:p-8 overflow-hidden shadow-2xl">
+        <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-emerald-500/10 rounded-full filter blur-3xl pointer-events-none -z-10" />
+        <div className="absolute -bottom-20 left-1/4 w-[300px] h-[300px] bg-blue-500/5 rounded-full filter blur-3xl pointer-events-none -z-10" />
 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
-          <div className="space-y-2 max-w-xl">
-            <div className="inline-flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full text-[10px] font-mono text-emerald-400 font-bold uppercase tracking-wider">
-              <Sparkles size={11} className="animate-pulse" />
-              SINKRONISASI MODRINTH LIVE
+          <div className="space-y-3 max-w-2xl">
+            <div className="inline-flex items-center gap-2 bg-emerald-500/15 border border-emerald-500/30 px-3.5 py-1.5 rounded-full text-[10px] font-mono text-emerald-400 font-bold uppercase tracking-wider shadow-sm">
+              <Sparkles size={11} className="animate-pulse text-emerald-300" />
+              Database Modrinth Terintegrasi • 100K+ Berkas
             </div>
-            <h2 className="text-2xl md:text-3xl font-display font-black text-slate-100 tracking-tight flex items-center gap-2">
-              <Globe size={26} className="text-emerald-500 animate-spin-slow shrink-0" />
-              Minecraft Online Database
+            <h2 className="text-2xl md:text-4xl font-display font-black text-slate-100 tracking-tight leading-tight">
+              Eksplorasi Mod & Add-on <span className="text-emerald-400 block sm:inline">Raksasa</span>
             </h2>
             <p className="text-xs md:text-sm text-slate-400 leading-relaxed">
-              Temukan dan unduh ratusan ribu modifikasi, addon, resource pack, dan shader terbaik di dunia langsung dari database Modrinth dengan super instan!
+              Cari apa saja yang kamu impikan — mod petualangan, shader ultra realistis, pack tekstur keren, hingga datapack kustom. Unduh langsung secara instan tanpa ribet!
             </p>
           </div>
 
-          {/* Search form */}
-          <form onSubmit={handleSearchSubmit} className="relative w-full md:max-w-xs shrink-0">
+          {/* Quick Search Input with Super Smooth Styling */}
+          <form onSubmit={handleSearchSubmit} className="relative w-full md:max-w-sm shrink-0">
             <div className="relative group">
               <input
                 type="text"
                 id="modrinth-search-input"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Cari mod, shader, addon..."
-                className="w-full bg-slate-950 border border-slate-800/80 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 text-slate-200 placeholder-slate-600 rounded-2xl pl-10 pr-16 py-3.5 text-xs outline-none transition-all font-semibold shadow-inner"
+                placeholder="Cari shader, mob, modpack..."
+                className="w-full bg-slate-950 border border-slate-800/80 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 text-slate-200 placeholder-slate-600 rounded-2xl pl-11 pr-20 py-4 text-xs outline-none transition-all font-semibold shadow-inner"
               />
-              <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-emerald-400 transition-colors" />
+              <Search size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-emerald-400 transition-colors" />
               <button
                 type="submit"
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-3 py-2 rounded-xl text-[10px] font-bold font-mono transition-all active:scale-95 cursor-pointer shadow-md shadow-emerald-500/10"
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-4 py-2.5 rounded-xl text-[11px] font-bold font-mono transition-all active:scale-95 cursor-pointer shadow-lg shadow-emerald-500/20"
               >
-                Cari
+                CARI
               </button>
             </div>
           </form>
         </div>
       </div>
 
+      {/* Modern Filter Controls Suite */}
+      <div className="bg-slate-950 border border-slate-900 rounded-2xl p-4 flex flex-col gap-4">
+        {/* Project Type Filter Pills (Desktop & Tablet Scrollable) */}
+        <div className="flex items-center justify-between gap-4 border-b border-slate-900/80 pb-3 overflow-x-auto no-scrollbar">
+          <div className="flex items-center gap-2 shrink-0">
+            {PROJECT_TYPES.map((type) => {
+              const Icon = type.icon;
+              const isSelected = selectedProjectType === type.id;
+              return (
+                <button
+                  key={type.id}
+                  onClick={() => setSelectedProjectType(type.id)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                    isSelected 
+                      ? "bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/10" 
+                      : "bg-slate-900/60 text-slate-400 hover:bg-slate-900 hover:text-slate-200 border border-slate-800/50"
+                  }`}
+                >
+                  <Icon size={13} className={isSelected ? "" : "text-emerald-500/80"} />
+                  <span>{type.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Sort selection & Mobile filters toggler */}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Sort Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setShowSortDropdown(!showSortDropdown)}
+                className="bg-slate-900/80 border border-slate-800 text-slate-300 hover:text-slate-100 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer"
+              >
+                <ArrowUpDown size={13} className="text-emerald-500" />
+                <span>Sort: {SORT_OPTIONS.find(o => o.id === selectedSort)?.label}</span>
+                <ChevronDown size={12} />
+              </button>
+
+              <AnimatePresence>
+                {showSortDropdown && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setShowSortDropdown(false)} />
+                    <motion.div
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 5 }}
+                      className="absolute right-0 mt-2 w-48 bg-slate-900 border border-slate-800 rounded-xl shadow-xl z-50 overflow-hidden"
+                    >
+                      {SORT_OPTIONS.map((opt) => (
+                        <button
+                          key={opt.id}
+                          onClick={() => {
+                            setSelectedSort(opt.id);
+                            setShowSortDropdown(false);
+                          }}
+                          className="w-full px-4 py-2.5 text-left text-xs font-semibold text-slate-300 hover:bg-slate-800 hover:text-slate-100 flex items-center justify-between transition-colors"
+                        >
+                          <span>{opt.label}</span>
+                          {selectedSort === opt.id && <Check size={12} className="text-emerald-500" />}
+                        </button>
+                      ))}
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Mobile Filter expander */}
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`md:hidden px-3.5 py-2 rounded-xl text-xs font-bold border flex items-center gap-1.5 transition-all cursor-pointer ${
+                showFilters 
+                  ? "bg-emerald-500/10 border-emerald-500 text-emerald-400" 
+                  : "bg-slate-900/80 border-slate-800 text-slate-400"
+              }`}
+            >
+              <Filter size={13} />
+              <span>Tema</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Category Topic Selection Row (Hidden on mobile unless toggled, fully visible on desktop) */}
+        <div className={`md:flex flex-wrap items-center gap-2 ${showFilters ? "flex" : "hidden"}`}>
+          <div className="text-[10px] uppercase font-mono font-bold text-slate-500 tracking-wider mr-2 w-full md:w-auto">
+            PILIH TEMA MOD:
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {CATEGORIES.map((cat) => {
+              const isSelected = selectedCategory === cat.id;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                    isSelected
+                      ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
+                      : "bg-slate-900/40 text-slate-400 hover:text-slate-200 border border-slate-900 hover:border-slate-800"
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Hits and counts status */}
+      <div className="flex items-center justify-between text-[11px] font-mono text-slate-500 px-1">
+        <div>
+          Menampilkan <span className="text-slate-300 font-bold">{projects.length}</span> dari <span className="text-slate-300 font-bold">{totalHits.toLocaleString()}+</span> hasil di Modrinth
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          Live Connected
+        </div>
+      </div>
+
       {/* Main Grid display / Loaders / Error handlers */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-32 gap-4">
+        <div className="flex flex-col items-center justify-center py-36 gap-4">
           <div className="relative flex items-center justify-center">
-            <div className="w-12 h-12 rounded-full border-4 border-emerald-500/10 border-t-emerald-500 animate-spin" />
-            <Globe size={18} className="absolute text-emerald-400 animate-pulse" />
+            <div className="w-16 h-16 rounded-full border-4 border-emerald-500/10 border-t-emerald-500 animate-spin" />
+            <Globe size={24} className="absolute text-emerald-400 animate-pulse" />
           </div>
-          <span className="text-xs font-mono text-slate-400 tracking-wider">Menghubungkan ke Modrinth API...</span>
+          <span className="text-xs font-mono text-slate-400 tracking-widest uppercase">MENGHUBUNGKAN MODRINTH CLOUD...</span>
         </div>
       ) : error ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center max-w-md mx-auto">
+        <div className="flex flex-col items-center justify-center py-20 text-center max-w-md mx-auto bg-slate-950 border border-slate-900 rounded-3xl p-8">
           <AlertCircle size={44} className="text-rose-500 mb-4" />
           <h4 className="text-base font-bold text-slate-100">Koneksi API Gagal</h4>
           <p className="text-xs text-slate-400 mt-1 mb-6 leading-relaxed">{error}</p>
           <button
-            onClick={() => handleSearch(searchQuery)}
-            className="bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-slate-950 border border-emerald-500/20 hover:border-emerald-500 px-5 py-2.5 rounded-xl text-xs font-bold transition-all"
+            onClick={() => handleSearch(false)}
+            className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-lg shadow-emerald-500/10"
           >
             Coba Hubungkan Kembali
           </button>
         </div>
       ) : projects.length === 0 ? (
         <div className="text-center py-24 border border-dashed border-slate-800 rounded-3xl max-w-md mx-auto">
-          <Sparkles size={36} className="text-slate-600 mx-auto mb-3" />
+          <Sparkles size={36} className="text-slate-600 mx-auto mb-3 animate-bounce" />
           <h4 className="text-sm font-bold text-slate-300">Hasil Tidak Ditemukan</h4>
-          <p className="text-xs text-slate-500 mt-1">Kami tidak menemukan hasil untuk "{searchQuery}". Coba kata kunci lainnya.</p>
+          <p className="text-xs text-slate-500 mt-1 leading-relaxed">Kami tidak menemukan hasil untuk kombinasi filter Anda. Silakan coba mengubah kata kunci atau ganti kategori.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {projects.map((project) => (
-            <motion.div
-              key={project.project_id}
-              initial={{ opacity: 0, y: 15 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.25 }}
-              className="bg-slate-900 border border-slate-800/80 hover:border-emerald-500/30 rounded-2xl p-5 flex flex-col justify-between gap-5 group/card hover:shadow-2xl hover:shadow-emerald-500/5 transition-all duration-300 relative overflow-hidden"
-            >
-              <div className="space-y-3.5">
-                {/* Card Header Info */}
-                <div className="flex gap-3">
-                  {/* Project Icon */}
-                  <div className="w-12 h-12 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center shrink-0 overflow-hidden relative shadow">
-                    {project.icon_url ? (
-                      <img
-                        src={project.icon_url}
-                        alt={project.title}
-                        referrerPolicy="no-referrer"
-                        className="w-full h-full object-cover group-hover/card:scale-110 transition-transform duration-300"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <Sparkles size={18} className="text-emerald-500/40" />
-                    )}
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <span className="bg-slate-950 text-slate-400 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md border border-slate-800/80 uppercase tracking-wider whitespace-nowrap">
-                        {project.project_type}
-                      </span>
+        <div className="space-y-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {projects.map((project, idx) => (
+              <motion.div
+                key={project.project_id + "-" + idx}
+                initial={{ opacity: 0, y: 15 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.2, delay: Math.min(idx * 0.03, 0.3) }}
+                className="bg-slate-950 border border-slate-900/80 hover:border-emerald-500/30 rounded-2xl p-5 flex flex-col justify-between gap-5 group/card hover:shadow-2xl hover:shadow-emerald-500/5 transition-all duration-300 relative overflow-hidden"
+              >
+                <div className="space-y-3.5">
+                  {/* Card Header Info */}
+                  <div className="flex gap-3">
+                    {/* Project Icon */}
+                    <div className="w-12 h-12 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0 overflow-hidden relative shadow">
+                      {project.icon_url ? (
+                        <img
+                          src={project.icon_url}
+                          alt={project.title}
+                          referrerPolicy="no-referrer"
+                          className="w-full h-full object-cover group-hover/card:scale-110 transition-transform duration-350"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <Sparkles size={18} className="text-emerald-500/30" />
+                      )}
                     </div>
-                    <h3 className="text-sm font-bold text-slate-100 truncate group-hover/card:text-emerald-400 transition-colors" title={project.title}>
-                      {project.title}
-                    </h3>
-                    <p className="text-[10px] text-slate-500 truncate">Oleh <span className="text-slate-400 font-semibold">{project.author}</span></p>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <span className="bg-slate-900 text-slate-400 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border border-slate-800/80 uppercase tracking-wider whitespace-nowrap">
+                          {project.project_type}
+                        </span>
+                      </div>
+                      <h3 className="text-sm font-bold text-slate-100 truncate group-hover/card:text-emerald-400 transition-colors" title={project.title}>
+                        {project.title}
+                      </h3>
+                      <p className="text-[10px] text-slate-500 truncate">Oleh <span className="text-slate-400 font-semibold">{project.author}</span></p>
+                    </div>
                   </div>
+
+                  {/* Short description */}
+                  <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+                    {project.description}
+                  </p>
                 </div>
 
-                {/* Short description */}
-                <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
-                  {project.description}
-                </p>
-              </div>
+                {/* Bottom stats and action button */}
+                <div className="flex items-center justify-between pt-3.5 border-t border-slate-900/60">
+                  <div className="flex items-center gap-1.5 font-mono text-[10px] text-slate-400">
+                    <Download size={12} className="text-emerald-500" />
+                    <span className="font-semibold">{formatDownloads(project.downloads)} Unduhan</span>
+                  </div>
 
-              {/* Bottom stats and action button */}
-              <div className="flex items-center justify-between pt-3.5 border-t border-slate-800/60">
-                <div className="flex items-center gap-1.5 font-mono text-[10px] text-slate-400">
-                  <Download size={12} className="text-slate-500 group-hover/card:text-emerald-400 transition-colors" />
-                  <span className="font-semibold">{formatDownloads(project.downloads)} Unduhan</span>
+                  <button
+                    onClick={() => handleSelectProject(project)}
+                    className="bg-slate-900 hover:bg-emerald-500 border border-slate-800/80 hover:border-emerald-500 text-slate-300 hover:text-slate-950 text-[11px] font-bold px-3.5 py-1.5 rounded-xl flex items-center gap-1 transition-all cursor-pointer shadow-sm active:scale-95"
+                  >
+                    <Eye size={12} />
+                    <span>Detail</span>
+                  </button>
                 </div>
+              </motion.div>
+            ))}
+          </div>
 
-                <button
-                  onClick={() => handleSelectProject(project)}
-                  className="bg-slate-950 group-hover/card:bg-emerald-500 border border-slate-800 group-hover/card:border-emerald-500 text-slate-300 group-hover/card:text-slate-950 text-[11px] font-bold px-3.5 py-1.5 rounded-xl flex items-center gap-1 transition-all cursor-pointer shadow-sm active:scale-95"
-                >
-                  <Eye size={12} />
-                  <span>Detail</span>
-                </button>
-              </div>
-            </motion.div>
-          ))}
+          {/* Load More Pagination Trigger */}
+          {hasMore && (
+            <div className="flex justify-center pt-2">
+              <button
+                disabled={loadingMore}
+                onClick={handleLoadMore}
+                className="bg-slate-950 hover:bg-slate-900 border border-slate-850 text-slate-300 hover:text-slate-100 text-xs font-bold px-8 py-3.5 rounded-2xl flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
+              >
+                {loadingMore ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin text-emerald-400" />
+                    <span>Memuat Lebih Banyak...</span>
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw size={13} className="text-emerald-500 animate-spin-slow" />
+                    <span>Muat Add-on Lainnya</span>
+                  </>
+                )}
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -305,7 +536,7 @@ export default function ModrinthExplore() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ type: "spring", stiffness: 350, damping: 28 }}
-              className="relative w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl z-10 flex flex-col my-8"
+              className="relative w-full max-w-2xl bg-slate-900 border border-slate-850 rounded-3xl overflow-hidden shadow-2xl z-10 flex flex-col my-8"
             >
               {/* Header block with close/back */}
               <div className="p-6 md:p-8 border-b border-slate-800/80 flex flex-col gap-4 bg-slate-950/40 relative">
@@ -320,11 +551,11 @@ export default function ModrinthExplore() {
                     <ArrowLeft size={14} />
                     Kembali ke Eksplorasi
                   </button>
-                  <span className="text-[10px] bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-mono px-2 py-0.5 rounded-md font-bold uppercase tracking-wider">Modrinth API</span>
+                  <span className="text-[10px] bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-mono px-2.5 py-0.5 rounded-md font-bold uppercase tracking-wider">Modrinth API Verified</span>
                 </div>
 
                 <div className="flex gap-4 items-start pt-2">
-                  <div className="w-16 h-16 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center overflow-hidden shrink-0 shadow-md">
+                  <div className="w-16 h-16 rounded-2xl bg-slate-900 border border-slate-855 flex items-center justify-center overflow-hidden shrink-0 shadow-md">
                     {selectedProject.icon_url ? (
                       <img
                         src={selectedProject.icon_url}
@@ -343,7 +574,7 @@ export default function ModrinthExplore() {
                         {selectedProject.project_type}
                       </span>
                       {selectedProject.display_categories?.slice(0, 3).map((cat) => (
-                        <span key={cat} className="bg-slate-900 text-slate-300 text-[9px] font-mono px-2 py-0.5 rounded-md border border-slate-800/80 uppercase">
+                        <span key={cat} className="bg-slate-950 text-slate-300 text-[9px] font-mono px-2 py-0.5 rounded-md border border-slate-800/80 uppercase">
                           {cat}
                         </span>
                       ))}
@@ -351,13 +582,13 @@ export default function ModrinthExplore() {
                     <h2 className="text-xl md:text-2xl font-display font-black text-slate-100 tracking-tight leading-tight">
                       {selectedProject.title}
                     </h2>
-                    <p className="text-xs text-slate-400">Dibuat oleh <span className="text-slate-200 font-semibold">{selectedProject.author}</span></p>
+                    <p className="text-xs text-slate-400 font-medium">Kreator: <span className="text-emerald-400 font-bold">{selectedProject.author}</span></p>
                   </div>
                 </div>
               </div>
 
               {/* Scrollable details view */}
-              <div className="p-6 md:p-8 overflow-y-auto max-h-[55vh] space-y-6">
+              <div className="p-6 md:p-8 overflow-y-auto max-h-[50vh] space-y-6">
                 <div>
                   <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider font-mono flex items-center gap-2 mb-2">
                     <BookOpen size={14} className="text-emerald-500" />
@@ -386,7 +617,7 @@ export default function ModrinthExplore() {
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      {versions.slice(0, 8).map((version) => {
+                      {versions.slice(0, 10).map((version) => {
                         // Find primary file or fallback to first file
                         const fileToDownload = version.files.find(f => f.primary) || version.files[0];
                         if (!fileToDownload) return null;
@@ -394,7 +625,7 @@ export default function ModrinthExplore() {
                         return (
                           <div
                             key={version.id}
-                            className="bg-slate-950/40 border border-slate-800/80 hover:border-emerald-500/20 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 transition-all duration-300"
+                            className="bg-slate-950/40 border border-slate-850 hover:border-emerald-500/20 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 transition-all duration-300"
                           >
                             <div className="space-y-1.5 min-w-0">
                               <div className="flex flex-wrap items-center gap-2">
@@ -412,9 +643,9 @@ export default function ModrinthExplore() {
                                   <span>{version.loaders.join(", ") || "Client/Server"}</span>
                                 </div>
                                 <span>•</span>
-                                <span className="text-slate-400">Minecraft {version.game_versions.slice(0, 3).join(", ")}</span>
+                                <span className="text-slate-400 font-medium">MC {version.game_versions.slice(0, 3).join(", ")}</span>
                                 <span>•</span>
-                                <span className="text-emerald-500 font-bold">{formatBytes(fileToDownload.size)}</span>
+                                <span className="text-emerald-400 font-bold">{formatBytes(fileToDownload.size)}</span>
                               </div>
                             </div>
 

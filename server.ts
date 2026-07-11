@@ -221,10 +221,42 @@ function loadLocalDb() {
 // Load local database
 loadLocalDb();
 
-async function seedDatabaseIfEmpty() {
+let isFirestoreExhausted = false;
+let lastFirestoreError = "";
+
+function checkFirestoreError(err: any): void {
+  const errMsg = err?.message || String(err);
+  if (
+    errMsg.includes("RESOURCE_EXHAUSTED") ||
+    errMsg.toLowerCase().includes("quota exceeded") ||
+    errMsg.toLowerCase().includes("write limit") ||
+    errMsg.toLowerCase().includes("quota_exceeded")
+  ) {
+    if (!isFirestoreExhausted) {
+      console.warn("CRITICAL: Firestore write/read quota exceeded! Gracefully degrading to LOCAL DB mode.");
+      isFirestoreExhausted = true;
+    }
+    lastFirestoreError = errMsg;
+  }
+}
+
+async function checkFirestoreQuotaProactively() {
   if (!db) return;
   try {
+    const testDocRef = doc(db, "system_metadata", "heartbeat");
+    await setDoc(testDocRef, { timestamp: new Date().toISOString() });
+    console.log("Proactive Firestore write check: SUCCESS.");
+  } catch (err: any) {
+    checkFirestoreError(err);
+    console.warn("Proactive Firestore write check failed, setting exhausted status:", err.message);
+  }
+}
+
+async function seedDatabaseIfEmpty() {
+  if (!db || isFirestoreExhausted) return;
+  try {
     for (const item of DEFAULT_ADDONS) {
+      if (isFirestoreExhausted) break;
       const docRef = doc(db, "addons", item.id);
       const docSnap = await getDoc(docRef);
 
@@ -251,6 +283,7 @@ async function seedDatabaseIfEmpty() {
     }
     console.log("Database seed validation and repair completed.");
   } catch (err: any) {
+    checkFirestoreError(err);
     console.warn("Gagal seeding database Firestore (kemungkinan besar karena batas kuota):", err.message);
   }
 }
@@ -261,7 +294,11 @@ if (fs.existsSync(firebaseConfigPath)) {
     const firebaseApp = initializeApp(firebaseConfig);
     db = getFirestore(firebaseApp, firebaseConfig.firestoreDatabaseId);
     console.log("Firebase initialized successfully on server. DB ID:", firebaseConfig.firestoreDatabaseId);
-    seedDatabaseIfEmpty();
+    
+    // Proactively check if write quota is active or exhausted before seeding
+    checkFirestoreQuotaProactively().then(() => {
+      seedDatabaseIfEmpty();
+    });
   } catch (err: any) {
     console.error("Error initializing Firebase:", err.message);
   }
@@ -285,11 +322,21 @@ function sendCoverResponse(res: any, coverBase64: string) {
   return res.send(buffer);
 }
 
+// API: Get database connection and quota status
+app.get("/api/db-status", (req, res) => {
+  res.json({
+    isFirestoreExhausted,
+    lastFirestoreError,
+    projectId: "gen-lang-client-0847298156",
+    databaseId: "ai-studio-glcom-3b86886a-921d-4161-960a-5bff7410489d"
+  });
+});
+
 // API: Get all addons
 app.get("/api/addons", async (req, res) => {
   try {
-    if (!db) {
-      throw new Error("Database tidak terhubung.");
+    if (!db || isFirestoreExhausted) {
+      throw new Error("Database tidak terhubung atau batas kuota terlampaui.");
     }
     const addonsRef = collection(db, "addons");
     const querySnap = await getDocs(addonsRef);
@@ -319,6 +366,7 @@ app.get("/api/addons", async (req, res) => {
     addons.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     res.json(addons);
   } catch (err: any) {
+    checkFirestoreError(err);
     console.warn("Firestore error, falling back to local DB cache:", err.message);
     
     // Fallback to local
@@ -332,7 +380,7 @@ app.get("/api/addons", async (req, res) => {
 app.get("/api/addons/:id/cover", async (req, res) => {
   const { id } = req.params;
   try {
-    if (!db) throw new Error("Database tidak aktif");
+    if (!db || isFirestoreExhausted) throw new Error("Database tidak aktif atau batas kuota terlampaui.");
     
     const docRef = doc(db, "addons", id);
     const docSnap = await getDoc(docRef);
@@ -354,6 +402,7 @@ app.get("/api/addons/:id/cover", async (req, res) => {
 
     return sendCoverResponse(res, data.coverBase64);
   } catch (err: any) {
+    checkFirestoreError(err);
     console.warn(`Firestore cover fetch failed for ${id}, using local fallback:`, err.message);
     const addon = localAddons[id];
     if (addon && addon.coverBase64) {
@@ -426,37 +475,40 @@ app.post("/api/addons", async (req, res) => {
   saveLocalDb();
 
   // 2. Optimistically try Firestore sync
-  try {
-    if (!db) throw new Error("Database tidak terhubung.");
-    
-    const addonRef = doc(db, "addons", id);
-    await setDoc(addonRef, {
-      ...newAddon,
-      coverBase64: finalCoverBase64
-    });
-
-    if (fileBase64) {
-      const CHUNK_SIZE = 500 * 1024;
-      let index = 0;
-      const writePromises = [];
-      for (let i = 0; i < fileBase64.length; i += CHUNK_SIZE) {
-        const chunkData = fileBase64.slice(i, i + CHUNK_SIZE);
-        const chunkRef = doc(db, "addons", id, "chunks", `chunk-${index}`);
-        writePromises.push(setDoc(chunkRef, { index, data: chunkData }));
-        index++;
-      }
-      await Promise.all(writePromises);
-    } else {
-      const dummyData = `// GL COM Minecraft Add-on File\n// Name: ${name}\n// Direct download without ads!\n// ID: ${id}`;
-      const chunkRef = doc(db, "addons", id, "chunks", `chunk-0`);
-      await setDoc(chunkRef, {
-        index: 0,
-        data: Buffer.from(dummyData).toString("base64")
+  if (!isFirestoreExhausted) {
+    try {
+      if (!db) throw new Error("Database tidak terhubung.");
+      
+      const addonRef = doc(db, "addons", id);
+      await setDoc(addonRef, {
+        ...newAddon,
+        coverBase64: finalCoverBase64
       });
+
+      if (fileBase64) {
+        const CHUNK_SIZE = 500 * 1024;
+        let index = 0;
+        const writePromises = [];
+        for (let i = 0; i < fileBase64.length; i += CHUNK_SIZE) {
+          const chunkData = fileBase64.slice(i, i + CHUNK_SIZE);
+          const chunkRef = doc(db, "addons", id, "chunks", `chunk-${index}`);
+          writePromises.push(setDoc(chunkRef, { index, data: chunkData }));
+          index++;
+        }
+        await Promise.all(writePromises);
+      } else {
+        const dummyData = `// GL COM Minecraft Add-on File\n// Name: ${name}\n// Direct download without ads!\n// ID: ${id}`;
+        const chunkRef = doc(db, "addons", id, "chunks", `chunk-0`);
+        await setDoc(chunkRef, {
+          index: 0,
+          data: Buffer.from(dummyData).toString("base64")
+        });
+      }
+      console.log(`Addon ${name} successfully synced to Firestore.`);
+    } catch (error: any) {
+      checkFirestoreError(error);
+      console.warn("Gagal sinkronisasi ke Firestore (disimpan secara lokal):", error.message);
     }
-    console.log(`Addon ${name} successfully synced to Firestore.`);
-  } catch (error: any) {
-    console.warn("Gagal sinkronisasi ke Firestore (disimpan secara lokal):", error.message);
   }
 
   res.status(201).json(newAddon);
@@ -469,7 +521,7 @@ app.get("/api/addons/:id/download", async (req, res) => {
   let base64Content = "";
 
   try {
-    if (!db) throw new Error("Database tidak aktif");
+    if (!db || isFirestoreExhausted) throw new Error("Database tidak aktif atau batas kuota terlampaui.");
 
     const docRef = doc(db, "addons", id);
     const docSnap = await getDoc(docRef);
@@ -483,7 +535,10 @@ app.get("/api/addons/:id/download", async (req, res) => {
     // Increment downloads count in Firestore (background/fire-and-forget)
     updateDoc(docRef, {
       downloads: (addon.downloads || 0) + 1
-    }).catch((err) => console.warn("Failed to increment download count in Firestore:", err.message));
+    }).catch((err) => {
+      checkFirestoreError(err);
+      console.warn("Failed to increment download count in Firestore:", err.message);
+    });
 
     // Fetch all binary chunks from Firestore subcollection
     const chunksRef = collection(db, "addons", id, "chunks");
@@ -518,6 +573,7 @@ app.get("/api/addons/:id/download", async (req, res) => {
     }
 
   } catch (error: any) {
+    checkFirestoreError(error);
     console.warn(`Firestore download fetch failed for ${id}, using local fallback:`, error.message);
     const localAddon = localAddons[id];
     if (!localAddon) {
@@ -583,18 +639,21 @@ app.post("/api/addons/:id/comments", async (req, res) => {
   }
 
   // 2. Try to sync to Firestore
-  try {
-    if (!db) throw new Error("Database tidak terhubung.");
-    const addonRef = doc(db, "addons", id);
-    const docSnap = await getDoc(addonRef);
-    if (docSnap.exists()) {
-      const addonData = docSnap.data();
-      const comments = addonData.comments || [];
-      comments.push(newComment);
-      await updateDoc(addonRef, { comments });
+  if (!isFirestoreExhausted) {
+    try {
+      if (!db) throw new Error("Database tidak terhubung.");
+      const addonRef = doc(db, "addons", id);
+      const docSnap = await getDoc(addonRef);
+      if (docSnap.exists()) {
+        const addonData = docSnap.data();
+        const comments = addonData.comments || [];
+        comments.push(newComment);
+        await updateDoc(addonRef, { comments });
+      }
+    } catch (error: any) {
+      checkFirestoreError(error);
+      console.warn("Gagal sinkronisasi komentar ke Firestore (disimpan secara lokal):", error.message);
     }
-  } catch (error: any) {
-    console.warn("Gagal sinkronisasi komentar ke Firestore (disimpan secara lokal):", error.message);
   }
 
   res.status(201).json(newComment);
@@ -649,49 +708,52 @@ app.put("/api/addons/:id", async (req, res) => {
   saveLocalDb();
 
   // 2. Try syncing to Firestore
-  try {
-    if (!db) throw new Error("Database tidak terhubung.");
-    const addonRef = doc(db, "addons", id);
-    const updates: any = {};
+  if (!isFirestoreExhausted) {
+    try {
+      if (!db) throw new Error("Database tidak terhubung.");
+      const addonRef = doc(db, "addons", id);
+      const updates: any = {};
 
-    if (name) updates.name = name;
-    if (description) updates.description = description;
-    if (category) updates.category = category;
-    if (compatibleVersion) updates.compatibleVersion = compatibleVersion;
-    if (author !== undefined) updates.author = author || "Admin";
+      if (name) updates.name = name;
+      if (description) updates.description = description;
+      if (category) updates.category = category;
+      if (compatibleVersion) updates.compatibleVersion = compatibleVersion;
+      if (author !== undefined) updates.author = author || "Admin";
 
-    if (coverBase64) {
-      updates.coverBase64 = coverBase64;
-      updates.coverUrl = `/api/addons/${id}/cover`;
-    }
-
-    if (fileBase64 && fileName) {
-      updates.fileName = fileName;
-      updates.fileSize = fileSize || "1.0 MB";
-      updates.fileUrl = `/api/addons/${id}/download`;
-
-      // Clean old chunks in parallel
-      const chunksRef = collection(db, "addons", id, "chunks");
-      const chunksSnap = await getDocs(chunksRef);
-      const deletePromises = chunksSnap.docs.map((chunkDoc) => deleteDoc(chunkDoc.ref));
-      await Promise.all(deletePromises);
-
-      // Write new chunks
-      const CHUNK_SIZE = 500 * 1024;
-      let index = 0;
-      const writePromises = [];
-      for (let i = 0; i < fileBase64.length; i += CHUNK_SIZE) {
-        const chunkData = fileBase64.slice(i, i + CHUNK_SIZE);
-        const chunkRef = doc(db, "addons", id, "chunks", `chunk-${index}`);
-        writePromises.push(setDoc(chunkRef, { index, data: chunkData }));
-        index++;
+      if (coverBase64) {
+        updates.coverBase64 = coverBase64;
+        updates.coverUrl = `/api/addons/${id}/cover`;
       }
-      await Promise.all(writePromises);
-    }
 
-    await updateDoc(addonRef, updates);
-  } catch (error: any) {
-    console.warn("Gagal sinkronisasi update ke Firestore (disimpan secara lokal):", error.message);
+      if (fileBase64 && fileName) {
+        updates.fileName = fileName;
+        updates.fileSize = fileSize || "1.0 MB";
+        updates.fileUrl = `/api/addons/${id}/download`;
+
+        // Clean old chunks in parallel
+        const chunksRef = collection(db, "addons", id, "chunks");
+        const chunksSnap = await getDocs(chunksRef);
+        const deletePromises = chunksSnap.docs.map((chunkDoc) => deleteDoc(chunkDoc.ref));
+        await Promise.all(deletePromises);
+
+        // Write new chunks
+        const CHUNK_SIZE = 500 * 1024;
+        let index = 0;
+        const writePromises = [];
+        for (let i = 0; i < fileBase64.length; i += CHUNK_SIZE) {
+          const chunkData = fileBase64.slice(i, i + CHUNK_SIZE);
+          const chunkRef = doc(db, "addons", id, "chunks", `chunk-${index}`);
+          writePromises.push(setDoc(chunkRef, { index, data: chunkData }));
+          index++;
+        }
+        await Promise.all(writePromises);
+      }
+
+      await updateDoc(addonRef, updates);
+    } catch (error: any) {
+      checkFirestoreError(error);
+      console.warn("Gagal sinkronisasi update ke Firestore (disimpan secara lokal):", error.message);
+    }
   }
 
   // Clean response representation
@@ -711,20 +773,23 @@ app.delete("/api/addons/:id", async (req, res) => {
   saveLocalDb();
 
   // 2. Try syncing to Firestore
-  try {
-    if (!db) throw new Error("Database tidak terhubung.");
-    const addonRef = doc(db, "addons", id);
-    
-    // First delete all file chunks subcollection in parallel
-    const chunksRef = collection(db, "addons", id, "chunks");
-    const chunksSnap = await getDocs(chunksRef);
-    const deletePromises = chunksSnap.docs.map((chunkDoc) => deleteDoc(chunkDoc.ref));
-    await Promise.all(deletePromises);
+  if (!isFirestoreExhausted) {
+    try {
+      if (!db) throw new Error("Database tidak terhubung.");
+      const addonRef = doc(db, "addons", id);
+      
+      // First delete all file chunks subcollection in parallel
+      const chunksRef = collection(db, "addons", id, "chunks");
+      const chunksSnap = await getDocs(chunksRef);
+      const deletePromises = chunksSnap.docs.map((chunkDoc) => deleteDoc(chunkDoc.ref));
+      await Promise.all(deletePromises);
 
-    // Delete parent addon metadata document
-    await deleteDoc(addonRef);
-  } catch (error: any) {
-    console.warn("Gagal sinkronisasi hapus ke Firestore (dihapus secara lokal):", error.message);
+      // Delete parent addon metadata document
+      await deleteDoc(addonRef);
+    } catch (error: any) {
+      checkFirestoreError(error);
+      console.warn("Gagal sinkronisasi hapus ke Firestore (dihapus secara lokal):", error.message);
+    }
   }
 
   res.json({ success: true, message: "Add-on berhasil dihapus." });
@@ -736,17 +801,35 @@ app.delete("/api/addons/:id", async (req, res) => {
 
 // API: Search projects on Modrinth
 app.get("/api/modrinth/search", async (req, res) => {
-  const { query, limit } = req.query;
+  const { query, limit, offset, index, project_type, category } = req.query;
   const searchQuery = query ? encodeURIComponent(query as string) : "";
-  const searchLimit = limit ? parseInt(limit as string, 10) : 20;
+  const searchLimit = limit ? parseInt(limit as string, 10) : 24;
+  const searchOffset = offset ? parseInt(offset as string, 10) : 0;
 
   try {
     // Search mods/datapacks/addons on Modrinth
-    let url = `https://api.modrinth.com/v2/search?limit=${searchLimit}`;
+    let url = `https://api.modrinth.com/v2/search?limit=${searchLimit}&offset=${searchOffset}`;
     if (searchQuery) {
       url += `&query=${searchQuery}`;
+    }
+    
+    if (index) {
+      url += `&index=${index}`;
     } else {
       url += `&index=downloads`;
+    }
+
+    // Dynamic Facet Filters (Project Type & Categories)
+    const facetsArray: string[][] = [];
+    if (project_type && project_type !== "all") {
+      facetsArray.push([`project_type:${project_type}`]);
+    }
+    if (category && category !== "all") {
+      facetsArray.push([`categories:${category}`]);
+    }
+
+    if (facetsArray.length > 0) {
+      url += `&facets=${encodeURIComponent(JSON.stringify(facetsArray))}`;
     }
 
     const response = await fetch(url, {

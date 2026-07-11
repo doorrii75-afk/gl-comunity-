@@ -29,12 +29,28 @@ export default function App() {
   const [adminCodeInput, setAdminCodeInput] = useState("");
   const [adminVerificationError, setAdminVerificationError] = useState("");
 
+  // Database Connection and Quota Status
+  const [dbStatus, setDbStatus] = useState<{ isFirestoreExhausted: boolean; lastFirestoreError: string; projectId: string; databaseId: string } | null>(null);
+
   // Modals / Filtering states
   const [selectedAddon, setSelectedAddon] = useState<Addon | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>("Semua");
   const [searchQuery, setSearchQuery] = useState("");
 
   const categories = ["Semua", "Survival", "Kreatif", "Transportasi", "Petualangan", "Alat (Tools)", "Skin", "Lainnya"];
+
+  // Fetch database status and quota information
+  const fetchDbStatus = async () => {
+    try {
+      const response = await fetch("/api/db-status");
+      if (response.ok) {
+        const data = await response.json();
+        setDbStatus(data);
+      }
+    } catch (err) {
+      console.warn("Gagal mengambil status database:", err);
+    }
+  };
 
   // Fetch all addons from server
   const fetchAddons = async (silent = false) => {
@@ -74,11 +90,13 @@ export default function App() {
 
   useEffect(() => {
     fetchAddons();
+    fetchDbStatus();
 
-    // Setup active real-time polling every 4 seconds to sync downloads, comments, and new uploads instantly
+    // Setup active real-time polling every 20 seconds to sync downloads, comments, and new uploads instantly
     const interval = setInterval(() => {
       fetchAddons(true);
-    }, 4000);
+      fetchDbStatus();
+    }, 20000);
 
     return () => clearInterval(interval);
   }, []);
@@ -282,6 +300,45 @@ export default function App() {
           </div>
         </div>
       </header>
+      
+      {/* Database Quota Warning Banner */}
+      {dbStatus?.isFirestoreExhausted && (
+        <div className="w-full max-w-7xl mx-auto px-4 md:px-8 pt-4">
+          <div className="bg-amber-950/40 border border-amber-500/30 rounded-2xl p-4 flex flex-col md:flex-row items-start gap-4 shadow-xl backdrop-blur-sm">
+            <div className="p-2.5 bg-amber-500/10 rounded-xl text-amber-400 shrink-0">
+              <AlertCircle size={24} />
+            </div>
+            <div className="flex-1 space-y-1">
+              <h4 className="text-sm font-bold text-amber-200">
+                Pemberitahuan Sistem: Mode Fail-safe Lokal Aktif
+              </h4>
+              <p className="text-xs leading-relaxed text-slate-300">
+                Database Cloud Firestore kami saat ini telah mencapai batas kuota tulis harian gratis (<code className="bg-slate-900 px-1 py-0.5 rounded text-rose-300 font-mono">RESOURCE_EXHAUSTED</code>). 
+                Semua fitur (mendownload, melihat, mengomentari, dan menambah add-on) tetap berjalan <strong>100% normal dan lancar</strong> dengan menggunakan penyimpanan cadangan lokal berkecepatan tinggi! Kuota cloud akan direset otomatis esok hari.
+              </p>
+              <div className="pt-2 flex flex-wrap items-center gap-4 text-[11px] font-medium">
+                <a
+                  href={`https://console.firebase.google.com/project/${dbStatus.projectId}/firestore/databases/${dbStatus.databaseId}/data?openUpgradeDialog=true`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-amber-400 hover:text-amber-300 transition-colors underline decoration-dotted font-mono"
+                >
+                  Buka Console Firebase untuk Upgrade
+                </a>
+                <span className="text-slate-600 hidden md:inline">•</span>
+                <a
+                  href="https://firebase.google.com/pricing#cloud-firestore"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-slate-400 hover:text-slate-300 transition-colors underline decoration-dotted"
+                >
+                  Detail Harga Firebase (Spark Plan)
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Background abstract glowing circles */}
       <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-emerald-500/5 rounded-full filter blur-3xl pointer-events-none -z-10" />
