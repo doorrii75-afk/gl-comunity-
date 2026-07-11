@@ -22,6 +22,76 @@ export default function App() {
   // Navigation: "beranda" | "kategori" | "cari" | "tambah" | "modrinth"
   const [activeTab, setActiveTab] = useState<"beranda" | "kategori" | "cari" | "tambah" | "modrinth">("beranda");
   
+  // Premium Interactive Mouse Light Tracking
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [isMouseIn, setIsMouseIn] = useState(false);
+
+  // Minecraft theme floating pixel particles
+  const [particles, setParticles] = useState<Array<{ id: number; left: number; size: number; delay: number; duration: number }>>([]);
+
+  // Top Slim Progress Bar for Vercel-style tab transitions
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [isTabChanging, setIsTabChanging] = useState(false);
+
+  useEffect(() => {
+    // Generate 15 premium floating emerald & diamond pixel block particles
+    const items = Array.from({ length: 15 }).map((_, i) => ({
+      id: i,
+      left: Math.random() * 100, // percentage of viewport width
+      size: Math.floor(Math.random() * 10) + 4, // 4px to 14px size
+      delay: Math.random() * 8,
+      duration: Math.random() * 18 + 12, // 12s to 30s speed
+    }));
+    setParticles(items);
+
+    // Mouse listeners for soft glow follow light
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePos({ x: e.clientX, y: e.clientY });
+      setIsMouseIn(true);
+    };
+    const handleMouseLeave = () => {
+      setIsMouseIn(false);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseleave", handleMouseLeave);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseleave", handleMouseLeave);
+    };
+  }, []);
+
+  // Animate the slim Vercel progress bar on active tab switches
+  useEffect(() => {
+    setIsTabChanging(true);
+    setLoadingProgress(15);
+
+    const interval = setInterval(() => {
+      setLoadingProgress((prev) => {
+        if (prev >= 90) {
+          clearInterval(interval);
+          return 90;
+        }
+        return prev + Math.floor(Math.random() * 12) + 6;
+      });
+    }, 60);
+
+    const timeout = setTimeout(() => {
+      clearInterval(interval);
+      setLoadingProgress(100);
+      setTimeout(() => {
+        setIsTabChanging(false);
+        setLoadingProgress(0);
+      }, 150);
+    }, 250);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, [activeTab]);
+  
   // Admin passcode verification
   const [isAdminVerified, setIsAdminVerified] = useState<boolean>(() => {
     return localStorage.getItem("glcom_admin_verified") === "true";
@@ -271,7 +341,66 @@ export default function App() {
   const popularTags = ["Ores", "Furniture", "Vehicles", "Creatures", "HUD", "Weapon", "Anime", "Skin"];
 
   return (
-    <div id="glcom-root-layout" className="min-h-screen flex flex-col relative pb-32">
+    <div id="glcom-root-layout" className="min-h-screen flex flex-col relative pb-32 premium-noise">
+      
+      {/* Vercel-style Slim Top Progress Bar for seamless transitions */}
+      {isTabChanging && (
+        <div className="fixed top-0 left-0 right-0 h-[2.5px] bg-slate-950/20 z-50">
+          <div
+            className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.5)] transition-all duration-150 ease-out"
+            style={{ width: `${loadingProgress}%` }}
+          />
+        </div>
+      )}
+
+      {/* Interactive Soft Glowing Light Following Cursor (Magnetic/Ambient UX) */}
+      {isMouseIn && (
+        <div
+          className="pointer-events-none fixed z-50 w-[320px] h-[320px] rounded-full bg-emerald-500/[0.04] blur-[80px] -translate-x-1/2 -translate-y-1/2 transition-opacity duration-300"
+          style={{
+            left: mousePos.x,
+            top: mousePos.y,
+          }}
+        />
+      )}
+
+      {/* Futuristic Ultra-Premium Animated Background Layers */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10 select-none">
+        {/* Slow moving aurora glow elements */}
+        <div className="absolute -top-[10%] left-[5%] w-[45vw] h-[45vw] rounded-full bg-emerald-500/[0.06] blur-[120px] animate-aurora-1" />
+        <div className="absolute -bottom-[15%] right-[10%] w-[50vw] h-[50vw] rounded-full bg-blue-500/[0.06] blur-[130px] animate-aurora-2" />
+        <div className="absolute top-[30%] right-[20%] w-[35vw] h-[35vw] rounded-full bg-emerald-400/[0.04] blur-[100px] animate-aurora-3" />
+        
+        {/* Grid pattern overlay */}
+        <div className="absolute inset-0 tech-grid opacity-75" />
+        
+        {/* Vignette focused depth mask */}
+        <div className="absolute inset-0 soft-vignette" />
+
+        {/* Drifting Minecraft Emerald Pixel Particles */}
+        {particles.map((p) => (
+          <motion.div
+            key={p.id}
+            initial={{ y: "105vh", x: `${p.left}vw`, opacity: 0, rotate: 0 }}
+            animate={{
+              y: "-10vh",
+              opacity: [0, 0.35, 0.35, 0],
+              rotate: [0, 90, 180, 270],
+            }}
+            transition={{
+              duration: p.duration,
+              delay: p.delay,
+              repeat: Infinity,
+              ease: "linear",
+            }}
+            className="absolute bg-emerald-500/10 border border-emerald-500/10 rounded-xs"
+            style={{
+              width: p.size,
+              height: p.size,
+            }}
+          />
+        ))}
+      </div>
       
       {/* Top spacer instead of header */}
       <div className="pt-6" />
@@ -314,10 +443,6 @@ export default function App() {
           </div>
         </div>
       )}
-      
-      {/* Background abstract glowing circles */}
-      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-emerald-500/5 rounded-full filter blur-3xl pointer-events-none -z-10" />
-      <div className="absolute bottom-1/3 right-1/4 w-[600px] h-[600px] bg-blue-500/5 rounded-full filter blur-3xl pointer-events-none -z-10" />
 
       {/* Main Content Area */}
       <main id="glcom-main-content" className="flex-1 w-full max-w-7xl mx-auto px-4 md:px-8 py-6">

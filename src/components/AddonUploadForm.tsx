@@ -221,7 +221,7 @@ export default function AddonUploadForm({ onUploadSuccess }: AddonUploadFormProp
   };
 
   return (
-    <div id="addon-upload-container" className="max-w-3xl mx-auto bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-xl">
+    <div id="addon-upload-container" className="max-w-3xl mx-auto glass-premium card-hover-border border border-slate-800/80 rounded-3xl p-6 md:p-8 shadow-2xl backdrop-blur-md transition-all duration-300">
       <div className="flex items-center gap-3 mb-6">
         <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
           <Sparkles size={20} />

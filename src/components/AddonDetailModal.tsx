@@ -273,7 +273,7 @@ export default function AddonDetailModal({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
         transition={{ type: "spring", stiffness: 350, damping: 28 }}
-        className="relative w-full max-w-4xl bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl z-10 flex flex-col my-8"
+        className="relative w-full max-w-4xl glass-premium card-hover-border border border-slate-800/80 rounded-3xl overflow-hidden shadow-2xl z-10 flex flex-col my-8 backdrop-blur-xl transition-all duration-300"
       >
         {/* Header/Close Button (Hidden when editing or deleting to prevent half-states) */}
         {!isEditing && !isConfirmingDelete && (

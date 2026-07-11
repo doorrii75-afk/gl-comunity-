@@ -86,7 +86,7 @@ export default function AddonSlider({ addons, onOpenDetails, onDownload }: Addon
   return (
     <div
       id="addon-slider-container"
-      className="relative w-full overflow-hidden rounded-3xl bg-slate-900 border border-slate-800/80 shadow-2xl group"
+      className="relative w-full overflow-hidden rounded-3xl glass-premium card-hover-border glaze-reflection glow-emerald hover:glow-emerald-active border border-slate-800/80 shadow-2xl group backdrop-blur-md transition-all duration-300"
       onMouseEnter={stopTimer}
       onMouseLeave={startTimer}
     >

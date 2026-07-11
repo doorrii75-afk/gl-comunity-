@@ -25,7 +25,7 @@ export default function AddonCard({ addon, onOpenDetails, onDownload }: AddonCar
       exit={{ opacity: 0, scale: 0.95 }}
       whileHover={{ y: -6 }}
       transition={{ type: "spring", stiffness: 300, damping: 25 }}
-      className="bg-slate-900 border border-slate-800/80 rounded-2xl overflow-hidden shadow-lg hover:shadow-emerald-500/5 hover:border-emerald-500/30 group flex flex-col h-full"
+      className="glass-premium card-hover-border glaze-reflection glow-emerald hover:glow-emerald-active rounded-2xl overflow-hidden shadow-xl hover:border-emerald-500/40 group flex flex-col h-full transition-all duration-300"
     >
       {/* Cover Image Container */}
       <div 

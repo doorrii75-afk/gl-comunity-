@@ -130,7 +130,7 @@ export default function ModrinthExplore() {
 
       const response = await fetch(`/api/modrinth/search?${params.toString()}`);
       if (!response.ok) {
-        throw new Error("Gagal mengambil data dari server Modrinth.");
+        throw new Error("Gagal mengambil data dari server cloud global.");
       }
       const data = await response.json();
       
@@ -267,7 +267,7 @@ export default function ModrinthExplore() {
     <div className="space-y-6 max-w-7xl mx-auto px-1 md:px-0" id="modrinth-explore-interactive">
       
       {/* Header Banner Section - Clean, Slim, and Compact Search-Only Bar */}
-      <div className="relative bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950/15 border border-slate-800/60 rounded-2xl p-4 overflow-hidden shadow-xl">
+      <div className="relative glass-premium card-hover-border border border-slate-800/60 rounded-2xl p-4 overflow-hidden shadow-xl">
         <div className="absolute top-0 right-0 w-[200px] h-[200px] bg-emerald-500/5 rounded-full filter blur-3xl pointer-events-none -z-10" />
 
         <div className="relative z-10">
@@ -294,7 +294,7 @@ export default function ModrinthExplore() {
       </div>
 
       {/* Modern Filter Controls Suite */}
-      <div className="bg-slate-950 border border-slate-900 rounded-2xl p-4 flex flex-col gap-4">
+      <div className="glass-premium border border-slate-900/60 rounded-2xl p-4 flex flex-col gap-4 backdrop-blur-md">
         {/* Project Type Filter Pills (Desktop & Tablet Scrollable) */}
         <div className="flex items-center justify-between gap-4 border-b border-slate-900/80 pb-3 overflow-x-auto no-scrollbar">
           <div className="flex items-center gap-2 shrink-0">
@@ -520,7 +520,7 @@ export default function ModrinthExplore() {
             {!hasMore && projects.length > 0 && (
               <div className="bg-slate-950/30 border border-slate-900/50 rounded-2xl px-6 py-4 text-center">
                 <span className="text-xs font-mono font-bold text-slate-500 uppercase tracking-wider block">
-                  🎉 Semua add-on Modrinth telah ditampilkan!
+                  🎉 Semua add-on online telah ditampilkan!
                 </span>
                 <span className="text-[10px] text-slate-600 font-mono block mt-1">
                   Menampilkan total {projects.length} berkas online
@@ -559,7 +559,7 @@ export default function ModrinthExplore() {
                     <ArrowLeft size={14} />
                     Kembali ke Eksplorasi
                   </button>
-                  <span className="text-[10px] bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-mono px-2.5 py-0.5 rounded-md font-bold uppercase tracking-wider">Modrinth API Verified</span>
+                  <span className="text-[10px] bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-mono px-2.5 py-0.5 rounded-md font-bold uppercase tracking-wider">Cloud API Verified</span>
                 </div>
 
                 <div className="flex gap-4 items-start pt-2">
@@ -617,7 +617,7 @@ export default function ModrinthExplore() {
                   {loadingVersions ? (
                     <div className="flex flex-col items-center justify-center py-12 gap-3 border border-slate-800/80 rounded-2xl bg-slate-950/20">
                       <Loader2 size={24} className="text-emerald-500 animate-spin" />
-                      <span className="text-[10px] text-slate-500 font-mono">Mengambil data rilis langsung dari Modrinth...</span>
+                      <span className="text-[10px] text-slate-500 font-mono">Mengambil data rilis langsung dari cloud global...</span>
                     </div>
                   ) : versions.length === 0 ? (
                     <div className="text-center py-8 border border-dashed border-slate-800 rounded-2xl text-slate-500 text-xs">
@@ -685,7 +685,7 @@ export default function ModrinthExplore() {
               {/* Safety badge in footer */}
               <div className="p-4 bg-slate-950/60 border-t border-slate-800/80 flex items-center justify-center gap-2 text-[11px] text-emerald-400 font-bold font-mono">
                 <ShieldCheck size={14} />
-                <span>100% AMAN • VERIFIKASI DIGITAL MODRINTH • PROXY AMAN</span>
+                <span>100% AMAN • VERIFIKASI CLOUD GLOBAL • PROXY AMAN</span>
               </div>
             </motion.div>
           </div>
