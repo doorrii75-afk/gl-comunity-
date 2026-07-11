@@ -5,21 +5,22 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Home, FolderHeart, Search, PlusCircle, Compass, Gamepad2, Sparkles, Sliders, ChevronRight, Download, Eye, AlertCircle, Lock, KeyRound, ShieldAlert } from "lucide-react";
+import { Home, FolderHeart, Search, PlusCircle, Compass, Gamepad2, Sparkles, Sliders, ChevronRight, Download, Eye, AlertCircle, Lock, KeyRound, ShieldAlert, Globe } from "lucide-react";
 
 import { Addon, Comment } from "./types";
 import AddonSlider from "./components/AddonSlider";
 import AddonCard from "./components/AddonCard";
 import AddonDetailModal from "./components/AddonDetailModal";
 import AddonUploadForm from "./components/AddonUploadForm";
+import ModrinthExplore from "./components/ModrinthExplore";
 
 export default function App() {
   const [addons, setAddons] = useState<Addon[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   
-  // Navigation: "beranda" | "kategori" | "cari" | "tambah"
-  const [activeTab, setActiveTab] = useState<"beranda" | "kategori" | "cari" | "tambah">("beranda");
+  // Navigation: "beranda" | "kategori" | "cari" | "tambah" | "modrinth"
+  const [activeTab, setActiveTab] = useState<"beranda" | "kategori" | "cari" | "tambah" | "modrinth">("beranda");
   
   // Admin passcode verification
   const [isAdminVerified, setIsAdminVerified] = useState<boolean>(() => {
@@ -622,6 +623,19 @@ export default function App() {
               </motion.div>
             )}
 
+            {/* TAB 5: MODRINTH (EXPLORE ONLINE) */}
+            {activeTab === "modrinth" && (
+              <motion.div
+                key="tab-modrinth"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                transition={{ duration: 0.25 }}
+              >
+                <ModrinthExplore />
+              </motion.div>
+            )}
+
           </AnimatePresence>
         )}
       </main>
@@ -685,6 +699,25 @@ export default function App() {
             )}
             <Search size={20} className={activeTab === "cari" ? "scale-110 text-emerald-400" : ""} />
             <span className="text-[10px] tracking-wide uppercase font-semibold">Cari</span>
+          </button>
+
+          {/* Menu Button: Online (Modrinth) */}
+          <button
+            id="nav-btn-modrinth"
+            onClick={() => setActiveTab("modrinth")}
+            className={`relative flex flex-col items-center gap-1.5 py-1.5 px-3 rounded-xl transition-all cursor-pointer ${
+              activeTab === "modrinth" ? "text-emerald-400 font-bold" : "text-slate-500 hover:text-slate-300"
+            }`}
+          >
+            {activeTab === "modrinth" && (
+              <motion.span
+                layoutId="nav-glow-bubble"
+                className="absolute inset-0 bg-emerald-500/10 border border-emerald-500/20 rounded-xl -z-10"
+                transition={{ type: "spring", stiffness: 350, damping: 25 }}
+              />
+            )}
+            <Globe size={20} className={activeTab === "modrinth" ? "scale-110 text-emerald-400" : ""} />
+            <span className="text-[10px] tracking-wide uppercase font-semibold">Online</span>
           </button>
 
           {/* Menu Button: Tambah */}

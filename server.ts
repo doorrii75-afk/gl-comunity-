@@ -730,6 +730,95 @@ app.delete("/api/addons/:id", async (req, res) => {
   res.json({ success: true, message: "Add-on berhasil dihapus." });
 });
 
+// ==========================================
+// MODRINTH PROXY ENDPOINTS (ONLINE ADD-ONS)
+// ==========================================
+
+// API: Search projects on Modrinth
+app.get("/api/modrinth/search", async (req, res) => {
+  const { query, limit } = req.query;
+  const searchQuery = query ? encodeURIComponent(query as string) : "";
+  const searchLimit = limit ? parseInt(limit as string, 10) : 20;
+
+  try {
+    // Search mods/datapacks/addons on Modrinth
+    let url = `https://api.modrinth.com/v2/search?limit=${searchLimit}`;
+    if (searchQuery) {
+      url += `&query=${searchQuery}`;
+    } else {
+      url += `&index=downloads`;
+    }
+
+    const response = await fetch(url, {
+      headers: {
+        "User-Agent": "doorrii75/minecraft-addon-hub/1.0.0 (contact: doorrii75@gmail.com)"
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Modrinth search returned HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+    res.json(data);
+  } catch (err: any) {
+    console.error("Gagal mencari di Modrinth:", err.message);
+    res.status(500).json({ error: "Gagal mencari di Modrinth: " + err.message });
+  }
+});
+
+// API: Get version lists for a project (to fetch the latest download link)
+app.get("/api/modrinth/project/:id/version", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const response = await fetch(`https://api.modrinth.com/v2/project/${id}/version`, {
+      headers: {
+        "User-Agent": "doorrii75/minecraft-addon-hub/1.0.0 (contact: doorrii75@gmail.com)"
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Modrinth version fetch returned HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+    res.json(data);
+  } catch (err: any) {
+    console.error(`Gagal mengambil versi Modrinth untuk project ${id}:`, err.message);
+    res.status(500).json({ error: "Gagal mengambil versi Modrinth: " + err.message });
+  }
+});
+
+// API: Secure download proxy to bypass iframe sandbox/mixed-content restrictions
+app.get("/api/modrinth/download", async (req, res) => {
+  const { url, filename } = req.query;
+  if (!url) {
+    return res.status(400).send("Parameter url wajib disertakan.");
+  }
+
+  try {
+    const fileResponse = await fetch(url as string, {
+      headers: {
+        "User-Agent": "doorrii75/minecraft-addon-hub/1.0.0 (contact: doorrii75@gmail.com)"
+      }
+    });
+
+    if (!fileResponse.ok) {
+      throw new Error(`Modrinth file download returned HTTP ${fileResponse.status}`);
+    }
+
+    const contentType = fileResponse.headers.get("content-type") || "application/octet-stream";
+    const fileBuffer = await fileResponse.arrayBuffer();
+
+    res.setHeader("Content-Disposition", `attachment; filename="${filename || "addon.mrpack"}"`);
+    res.setHeader("Content-Type", contentType);
+    return res.send(Buffer.from(fileBuffer));
+  } catch (err: any) {
+    console.error("Gagal mendownload file dari Modrinth:", err.message);
+    res.status(500).send("Gagal mengunduh file dari Modrinth: " + err.message);
+  }
+});
+
 // Vite Integration
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {
