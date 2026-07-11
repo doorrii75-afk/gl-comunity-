@@ -255,6 +255,34 @@ export default function App() {
   return (
     <div id="glcom-root-layout" className="min-h-screen flex flex-col relative pb-32">
       
+      {/* Premium Top Navigation Bar */}
+      <header className="w-full bg-slate-950/60 backdrop-blur-md border-b border-slate-900 sticky top-0 z-40 transition-all">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-500 flex items-center justify-center text-slate-950 font-black tracking-tight shadow-md shadow-emerald-500/10">
+              GL
+            </div>
+            <div>
+              <span className="text-sm font-display font-black text-slate-100 tracking-tight uppercase block">
+                GL COM <span className="text-emerald-400">Addon Hub</span>
+              </span>
+              <span className="hidden sm:block text-[9px] text-slate-500 font-mono">Ver 2.5 • Portal Minecraft Terpercaya</span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {/* Real-time Online status indicator */}
+            <div className="bg-slate-900/80 border border-slate-800/80 rounded-full px-3 py-1 flex items-center gap-1.5 text-[10px] font-mono text-slate-400 font-bold shadow-sm">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span>Modrinth Online Active</span>
+            </div>
+          </div>
+        </div>
+      </header>
+      
       {/* Background abstract glowing circles */}
       <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-emerald-500/5 rounded-full filter blur-3xl pointer-events-none -z-10" />
       <div className="absolute bottom-1/3 right-1/4 w-[600px] h-[600px] bg-blue-500/5 rounded-full filter blur-3xl pointer-events-none -z-10" />
@@ -641,14 +669,14 @@ export default function App() {
       </main>
 
       {/* Floating Bottom Menu Glassmorphism Navigation Dock (Mobile-First / Super Modern) */}
-      <nav id="floating-bottom-nav" className="fixed bottom-6 left-1/2 -translate-x-1/2 z-45 w-[92%] max-w-md bg-slate-950/80 backdrop-blur-lg border border-slate-800/80 rounded-2xl px-4 py-2.5 shadow-2xl shadow-black/60">
-        <div className="flex items-center justify-around relative">
+      <nav id="floating-bottom-nav" className="fixed bottom-4 left-1/2 -translate-x-1/2 z-45 w-[94%] max-w-lg bg-slate-950/85 backdrop-blur-xl border border-slate-800/60 rounded-2xl px-2.5 py-2 shadow-2xl shadow-black/80">
+        <div className="flex items-center justify-between relative gap-1">
           
           {/* Menu Button: Beranda */}
           <button
             id="nav-btn-beranda"
             onClick={() => { setActiveTab("beranda"); setSelectedCategory("Semua"); }}
-            className={`relative flex flex-col items-center gap-1.5 py-1.5 px-3 rounded-xl transition-all cursor-pointer ${
+            className={`relative flex-1 flex flex-col items-center gap-1 py-1.5 px-2 rounded-xl transition-all cursor-pointer ${
               activeTab === "beranda" ? "text-emerald-400 font-bold" : "text-slate-500 hover:text-slate-300"
             }`}
           >
@@ -659,15 +687,15 @@ export default function App() {
                 transition={{ type: "spring", stiffness: 350, damping: 25 }}
               />
             )}
-            <Home size={20} className={activeTab === "beranda" ? "scale-110 text-emerald-400" : ""} />
-            <span className="text-[10px] tracking-wide uppercase font-semibold">Beranda</span>
+            <Home size={18} className={activeTab === "beranda" ? "scale-110 text-emerald-400" : ""} />
+            <span className="text-[9px] sm:text-[10px] tracking-wide uppercase font-semibold whitespace-nowrap">Beranda</span>
           </button>
 
           {/* Menu Button: Kategori */}
           <button
             id="nav-btn-kategori"
             onClick={() => setActiveTab("kategori")}
-            className={`relative flex flex-col items-center gap-1.5 py-1.5 px-3 rounded-xl transition-all cursor-pointer ${
+            className={`relative flex-1 flex flex-col items-center gap-1 py-1.5 px-2 rounded-xl transition-all cursor-pointer ${
               activeTab === "kategori" ? "text-emerald-400 font-bold" : "text-slate-500 hover:text-slate-300"
             }`}
           >
@@ -678,15 +706,15 @@ export default function App() {
                 transition={{ type: "spring", stiffness: 350, damping: 25 }}
               />
             )}
-            <FolderHeart size={20} className={activeTab === "kategori" ? "scale-110 text-emerald-400" : ""} />
-            <span className="text-[10px] tracking-wide uppercase font-semibold">Kategori</span>
+            <FolderHeart size={18} className={activeTab === "kategori" ? "scale-110 text-emerald-400" : ""} />
+            <span className="text-[9px] sm:text-[10px] tracking-wide uppercase font-semibold whitespace-nowrap">Kategori</span>
           </button>
 
           {/* Menu Button: Cari */}
           <button
             id="nav-btn-cari"
             onClick={() => setActiveTab("cari")}
-            className={`relative flex flex-col items-center gap-1.5 py-1.5 px-3 rounded-xl transition-all cursor-pointer ${
+            className={`relative flex-1 flex flex-col items-center gap-1 py-1.5 px-2 rounded-xl transition-all cursor-pointer ${
               activeTab === "cari" ? "text-emerald-400 font-bold" : "text-slate-500 hover:text-slate-300"
             }`}
           >
@@ -697,15 +725,15 @@ export default function App() {
                 transition={{ type: "spring", stiffness: 350, damping: 25 }}
               />
             )}
-            <Search size={20} className={activeTab === "cari" ? "scale-110 text-emerald-400" : ""} />
-            <span className="text-[10px] tracking-wide uppercase font-semibold">Cari</span>
+            <Search size={18} className={activeTab === "cari" ? "scale-110 text-emerald-400" : ""} />
+            <span className="text-[9px] sm:text-[10px] tracking-wide uppercase font-semibold whitespace-nowrap">Cari</span>
           </button>
 
           {/* Menu Button: Online (Modrinth) */}
           <button
             id="nav-btn-modrinth"
             onClick={() => setActiveTab("modrinth")}
-            className={`relative flex flex-col items-center gap-1.5 py-1.5 px-3 rounded-xl transition-all cursor-pointer ${
+            className={`relative flex-1 flex flex-col items-center gap-1 py-1.5 px-2 rounded-xl transition-all cursor-pointer ${
               activeTab === "modrinth" ? "text-emerald-400 font-bold" : "text-slate-500 hover:text-slate-300"
             }`}
           >
@@ -716,15 +744,15 @@ export default function App() {
                 transition={{ type: "spring", stiffness: 350, damping: 25 }}
               />
             )}
-            <Globe size={20} className={activeTab === "modrinth" ? "scale-110 text-emerald-400" : ""} />
-            <span className="text-[10px] tracking-wide uppercase font-semibold">Online</span>
+            <Globe size={18} className={activeTab === "modrinth" ? "scale-110 text-emerald-400" : ""} />
+            <span className="text-[9px] sm:text-[10px] tracking-wide uppercase font-semibold whitespace-nowrap">Online</span>
           </button>
 
           {/* Menu Button: Tambah */}
           <button
             id="nav-btn-tambah"
             onClick={() => setActiveTab("tambah")}
-            className={`relative flex flex-col items-center gap-1.5 py-1.5 px-3 rounded-xl transition-all cursor-pointer ${
+            className={`relative flex-1 flex flex-col items-center gap-1 py-1.5 px-2 rounded-xl transition-all cursor-pointer ${
               activeTab === "tambah" ? "text-emerald-400 font-bold" : "text-slate-500 hover:text-slate-300"
             }`}
           >
@@ -735,8 +763,8 @@ export default function App() {
                 transition={{ type: "spring", stiffness: 350, damping: 25 }}
               />
             )}
-            <PlusCircle size={20} className={activeTab === "tambah" ? "scale-110 text-emerald-400" : ""} />
-            <span className="text-[10px] tracking-wide uppercase font-semibold">Tambah</span>
+            <PlusCircle size={18} className={activeTab === "tambah" ? "scale-110 text-emerald-400" : ""} />
+            <span className="text-[9px] sm:text-[10px] tracking-wide uppercase font-semibold whitespace-nowrap">Tambah</span>
           </button>
 
         </div>
