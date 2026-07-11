@@ -58,21 +58,21 @@ export default function AddonDetailModal({
   const [isEditing, setIsEditing] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
 
-  const [editName, setEditName] = useState(addon.name);
-  const [editDescription, setEditDescription] = useState(addon.description);
-  const [editCategory, setEditCategory] = useState(addon.category);
-  const [editCompatibleVersion, setEditCompatibleVersion] = useState(addon.compatibleVersion);
+  const [editName, setEditName] = useState(addon.name || "");
+  const [editDescription, setEditDescription] = useState(addon.description || "");
+  const [editCategory, setEditCategory] = useState(addon.category || "Survival");
+  const [editCompatibleVersion, setEditCompatibleVersion] = useState(addon.compatibleVersion || "1.21.x");
   const [editAuthor, setEditAuthor] = useState(addon.author || "Admin");
 
   // Cover upload states
   const [editCoverBase64, setEditCoverBase64] = useState("");
   const [editCoverName, setEditCoverName] = useState("");
-  const [editCoverPreview, setEditCoverPreview] = useState(addon.coverUrl);
+  const [editCoverPreview, setEditCoverPreview] = useState(addon.coverUrl || "");
 
   // File upload states
   const [editFileBase64, setEditFileBase64] = useState("");
-  const [editFileName, setEditFileName] = useState(addon.fileName);
-  const [editFileSize, setEditFileSize] = useState(addon.fileSize);
+  const [editFileName, setEditFileName] = useState(addon.fileName || "");
+  const [editFileSize, setEditFileSize] = useState(addon.fileSize || "1.0 MB");
 
   // Statuses
   const [isSaving, setIsSaving] = useState(false);
@@ -617,18 +617,18 @@ export default function AddonDetailModal({
                   {/* Left Title details */}
                   <div className="flex-1">
                     <h1 className="text-2xl md:text-3xl font-display font-bold text-slate-100 mb-2">
-                      {addon.name}
+                      {addon.name || "Add-on Tanpa Nama"}
                     </h1>
 
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-mono text-slate-400">
                       <div className="flex items-center gap-1.5">
                         <User size={14} className="text-emerald-400" />
-                        <span>Oleh: <span className="text-slate-200">{addon.author}</span></span>
+                        <span>Oleh: <span className="text-slate-200">{addon.author || "Admin"}</span></span>
                       </div>
                       <div className="h-1 w-1 bg-slate-700 rounded-full" />
                       <div className="flex items-center gap-1.5">
                         <Calendar size={14} className="text-slate-500" />
-                        <span>Diupload: {new Date(addon.createdAt).toLocaleDateString("id-ID", { year: "numeric", month: "long", day: "numeric" })}</span>
+                        <span>Diupload: {new Date(addon.createdAt || new Date().toISOString()).toLocaleDateString("id-ID", { year: "numeric", month: "long", day: "numeric" })}</span>
                       </div>
                       <div className="h-1 w-1 bg-slate-700 rounded-full" />
                       <div className="flex items-center gap-1.5">
@@ -710,19 +710,19 @@ export default function AddonDetailModal({
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-6 border-b border-slate-800/80">
                   <div className="bg-slate-950/40 p-3 rounded-xl border border-slate-800/50">
                     <span className="block text-[10px] font-mono text-slate-500 uppercase">Jumlah Unduhan</span>
-                    <span className="text-base font-bold text-slate-200 font-mono">{addon.downloads.toLocaleString("id-ID")}x</span>
+                    <span className="text-base font-bold text-slate-200 font-mono">{(addon.downloads || 0).toLocaleString("id-ID")}x</span>
                   </div>
                   <div className="bg-slate-950/40 p-3 rounded-xl border border-slate-800/50">
                     <span className="block text-[10px] font-mono text-slate-500 uppercase">Ukuran File</span>
-                    <span className="text-base font-bold text-slate-200 font-mono">{addon.fileSize}</span>
+                    <span className="text-base font-bold text-slate-200 font-mono">{addon.fileSize || "1.0 MB"}</span>
                   </div>
                   <div className="bg-slate-950/40 p-3 rounded-xl border border-slate-800/50">
                     <span className="block text-[10px] font-mono text-slate-500 uppercase">Kompatibilitas</span>
-                    <span className="text-sm font-bold text-emerald-400 font-mono">{addon.compatibleVersion}</span>
+                    <span className="text-sm font-bold text-emerald-400 font-mono">{addon.compatibleVersion || "1.21.x"}</span>
                   </div>
                   <div className="bg-slate-950/40 p-3 rounded-xl border border-slate-800/50">
                     <span className="block text-[10px] font-mono text-slate-500 uppercase">Nama File</span>
-                    <span className="text-xs font-bold text-slate-300 font-mono truncate block" title={addon.fileName}>{addon.fileName}</span>
+                    <span className="text-xs font-bold text-slate-300 font-mono truncate block" title={addon.fileName || "addon.mcaddon"}>{addon.fileName || "addon.mcaddon"}</span>
                   </div>
                 </div>
 
@@ -809,7 +809,7 @@ export default function AddonDetailModal({
                   <div className="md:col-span-5 flex flex-col gap-4">
                     <h3 className="text-lg font-display font-semibold text-slate-200 flex items-center gap-2">
                       <MessageSquare size={18} className="text-emerald-400" />
-                      Diskusi ({addon.comments.length})
+                      Diskusi ({(addon.comments || []).length})
                     </h3>
 
                     {/* Form to post new comment */}
@@ -851,23 +851,23 @@ export default function AddonDetailModal({
 
                     {/* List of comments */}
                     <div className="flex flex-col gap-3 max-h-[300px] overflow-y-auto pr-1">
-                      {addon.comments.length === 0 ? (
+                      {!(addon.comments || []).length ? (
                         <div className="text-center py-6 text-slate-500 text-xs border border-dashed border-slate-800 rounded-xl">
                           Belum ada komentar. Jadilah yang pertama memberikan ulasan!
                         </div>
                       ) : (
-                        [...addon.comments].reverse().map((comment) => (
+                        [...(addon.comments || [])].reverse().map((comment) => (
                           <div key={comment.id} className="bg-slate-950/20 p-3.5 rounded-xl border border-slate-800/40 flex gap-3">
                             {/* Avatar */}
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 select-none ${getAvatarColor(comment.username)}`}>
-                              {comment.username.charAt(0).toUpperCase()}
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 select-none ${getAvatarColor(comment.username || "User")}`}>
+                              {(comment.username || "U").charAt(0).toUpperCase()}
                             </div>
                             {/* Comment detail */}
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center justify-between gap-2 mb-1">
-                                <span className="text-xs font-bold text-slate-200 truncate">{comment.username}</span>
+                                <span className="text-xs font-bold text-slate-200 truncate">{comment.username || "User"}</span>
                                 <span className="text-[10px] font-mono text-slate-500 shrink-0">
-                                  {new Date(comment.createdAt).toLocaleDateString("id-ID", { month: "short", day: "numeric" })}
+                                  {new Date(comment.createdAt || new Date().toISOString()).toLocaleDateString("id-ID", { month: "short", day: "numeric" })}
                                 </span>
                               </div>
                               <p className="text-xs text-slate-300 leading-relaxed break-words">

@@ -218,6 +218,32 @@ function loadLocalDb() {
   try {
     if (fs.existsSync(LOCAL_DB_PATH)) {
       localAddons = JSON.parse(fs.readFileSync(LOCAL_DB_PATH, "utf-8"));
+      
+      // Auto-repair missing/corrupted fields in local cached addons
+      let wasRepaired = false;
+      for (const id of Object.keys(localAddons)) {
+        const addon = localAddons[id];
+        if (!addon.id) { addon.id = id; wasRepaired = true; }
+        if (!addon.name) { addon.name = "Action & Stuff (Repaired)"; wasRepaired = true; }
+        if (!addon.category) { addon.category = "Survival"; wasRepaired = true; }
+        if (!addon.compatibleVersion) { addon.compatibleVersion = "1.21.x"; wasRepaired = true; }
+        if (!addon.author) { addon.author = "Admin"; wasRepaired = true; }
+        if (!addon.createdAt) { addon.createdAt = new Date().toISOString(); wasRepaired = true; }
+        if (!addon.description) { addon.description = "Add-on Minecraft"; wasRepaired = true; }
+        if (addon.downloads === undefined) { addon.downloads = 0; wasRepaired = true; }
+        if (!addon.comments) { addon.comments = []; wasRepaired = true; }
+        if (addon.ratingSum === undefined) { addon.ratingSum = 0; wasRepaired = true; }
+        if (addon.ratingCount === undefined) { addon.ratingCount = 0; wasRepaired = true; }
+        if (!addon.coverUrl) { addon.coverUrl = `/api/addons/${id}/cover`; wasRepaired = true; }
+        if (!addon.fileUrl) { addon.fileUrl = `/api/addons/${id}/download`; wasRepaired = true; }
+        if (!addon.fileName) { addon.fileName = "addon.mcaddon"; wasRepaired = true; }
+        if (!addon.fileSize) { addon.fileSize = "1.0 MB"; wasRepaired = true; }
+      }
+      if (wasRepaired) {
+        saveLocalDb();
+        console.log("Local fallback DB was repaired and synchronized.");
+      }
+
       console.log(`Loaded ${Object.keys(localAddons).length} addons from local fallback DB.`);
     } else {
       seedLocalDbDefaults();
@@ -351,7 +377,7 @@ app.get("/api/addons", async (req, res) => {
     const addonsRef = collection(db, "addons");
     const querySnap = await getDocs(addonsRef);
     
-    const addons = querySnap.docs.map((d) => {
+    querySnap.docs.forEach((d) => {
       const data = d.data() as Addon;
       const id = d.id;
       
@@ -364,17 +390,19 @@ app.get("/api/addons", async (req, res) => {
           ...data
         };
       }
-
-      // Exclude heavy coverBase64 field to keep GET response lightweight and ultra-fast
-      const { coverBase64, chunks, ...rest } = data as any;
-      return rest;
     });
 
     saveLocalDb();
 
+    // Map all localAddons (contains both synced and local-only uploads) to keep response lightweight
+    const combinedAddons = Object.values(localAddons).map((addon) => {
+      const { coverBase64, chunks, ...rest } = addon;
+      return rest;
+    });
+
     // Sort by createdAt descending
-    addons.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    res.json(addons);
+    combinedAddons.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    res.json(combinedAddons);
   } catch (err: any) {
     checkFirestoreError(err);
     console.warn("Firestore error, falling back to local DB cache:", err.message);

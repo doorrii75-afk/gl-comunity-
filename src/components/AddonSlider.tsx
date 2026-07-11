@@ -17,7 +17,7 @@ interface AddonSliderProps {
 export default function AddonSlider({ addons, onOpenDetails, onDownload }: AddonSliderProps) {
   // Sort addons by download count to find the top 4 featured popular ones
   const featuredAddons = [...addons]
-    .sort((a, b) => b.downloads - a.downloads)
+    .sort((a, b) => (b.downloads || 0) - (a.downloads || 0))
     .slice(0, 4);
 
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -143,21 +143,21 @@ export default function AddonSlider({ addons, onOpenDetails, onDownload }: Addon
               <div className="flex items-center gap-3 mb-3">
                 <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full">
                   <Tag size={12} />
-                  {currentAddon.category}
+                  {currentAddon.category || "Survival"}
                 </span>
                 <span className="text-xs font-mono text-slate-400 bg-slate-800/80 border border-slate-700/50 px-2.5 py-0.5 rounded-full">
-                  MC {currentAddon.compatibleVersion}
+                  MC {currentAddon.compatibleVersion || "1.21.x"}
                 </span>
               </div>
 
               {/* Addon Name */}
               <h2 className="text-2xl md:text-3xl font-display font-bold text-slate-100 tracking-tight leading-tight mb-3 group-hover:text-emerald-400 transition-colors">
-                {currentAddon.name}
+                {currentAddon.name || "Add-on Tanpa Nama"}
               </h2>
 
               {/* Addon Description Snippet */}
               <p className="text-slate-300 text-sm leading-relaxed line-clamp-3 mb-6">
-                {currentAddon.description}
+                {currentAddon.description || "Tidak ada deskripsi."}
               </p>
 
               {/* Download Stats and File Info */}
@@ -165,12 +165,12 @@ export default function AddonSlider({ addons, onOpenDetails, onDownload }: Addon
                 <div>
                   Unduhan:{" "}
                   <span className="text-emerald-400 font-bold">
-                    {currentAddon.downloads.toLocaleString("id-ID")}x
+                    {(currentAddon.downloads || 0).toLocaleString("id-ID")}x
                   </span>
                 </div>
                 <div className="h-1.5 w-1.5 rounded-full bg-slate-700" />
                 <div>
-                  Ukuran: <span className="text-slate-200">{currentAddon.fileSize}</span>
+                  Ukuran: <span className="text-slate-200">{currentAddon.fileSize || "1.0 MB"}</span>
                 </div>
                 <div className="h-1.5 w-1.5 rounded-full bg-slate-700" />
                 <div className="flex items-center gap-1">

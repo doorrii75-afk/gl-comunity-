@@ -522,22 +522,31 @@ export default function App() {
   // Filtered addons for Categories Tab
   const filteredCategoryAddons = addons.filter((addon) => {
     if (selectedCategory === "Semua") return true;
-    return addon.category.toLowerCase() === selectedCategory.toLowerCase();
+    const cat = addon.category || "Survival";
+    return cat.toLowerCase() === selectedCategory.toLowerCase();
   });
 
   // Filtered addons for Search Tab
   const filteredSearchAddons = addons.filter((addon) => {
     const q = searchQuery.toLowerCase();
+    const name = addon.name || "Add-on Tanpa Nama";
+    const desc = addon.description || "Tidak ada deskripsi.";
+    const cat = addon.category || "Survival";
+    const version = addon.compatibleVersion || "1.21.x";
     return (
-      addon.name.toLowerCase().includes(q) ||
-      addon.description.toLowerCase().includes(q) ||
-      addon.category.toLowerCase().includes(q) ||
-      addon.compatibleVersion.toLowerCase().includes(q)
+      name.toLowerCase().includes(q) ||
+      desc.toLowerCase().includes(q) ||
+      cat.toLowerCase().includes(q) ||
+      version.toLowerCase().includes(q)
     );
   });
 
   // Recent/latest addons (excluding popular if they are on slider, or just showing newest first)
-  const latestAddons = [...addons].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const latestAddons = [...addons].sort((a, b) => {
+    const dateA = new Date(a.createdAt || new Date().toISOString()).getTime();
+    const dateB = new Date(b.createdAt || new Date().toISOString()).getTime();
+    return dateB - dateA;
+  });
 
   // Quick popular search suggestion tags
   const popularTags = ["Ores", "Furniture", "Vehicles", "Creatures", "HUD", "Weapon", "Anime", "Skin"];

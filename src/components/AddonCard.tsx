@@ -44,12 +44,12 @@ export default function AddonCard({ addon, onOpenDetails, onDownload }: AddonCar
         
         {/* Category Floating Badge */}
         <span className="absolute top-3 left-3 bg-slate-950/85 backdrop-blur-sm border border-slate-800 text-emerald-400 text-[10px] font-bold font-mono uppercase tracking-wider px-2 py-1 rounded-md">
-          {addon.category}
+          {addon.category || "Survival"}
         </span>
         
         {/* Version Floating Badge */}
         <span className="absolute bottom-3 right-3 bg-emerald-500 text-slate-950 text-[10px] font-bold font-mono px-2 py-0.5 rounded shadow">
-          {addon.compatibleVersion}
+          {addon.compatibleVersion || "1.21.x"}
         </span>
       </div>
 
@@ -58,9 +58,9 @@ export default function AddonCard({ addon, onOpenDetails, onDownload }: AddonCar
         <div className="mb-4">
           {/* Creator and date with rating */}
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-mono text-slate-500 mb-2">
-            <span>Oleh {addon.author}</span>
+            <span>Oleh {addon.author || "Admin"}</span>
             <span>•</span>
-            <span>{new Date(addon.createdAt).toLocaleDateString("id-ID", { month: "short", day: "numeric" })}</span>
+            <span>{new Date(addon.createdAt || new Date().toISOString()).toLocaleDateString("id-ID", { month: "short", day: "numeric" })}</span>
             {addon.ratingCount && addon.ratingCount > 0 ? (
               <>
                 <span>•</span>
@@ -86,12 +86,12 @@ export default function AddonCard({ addon, onOpenDetails, onDownload }: AddonCar
             onClick={() => onOpenDetails(addon)}
             className="text-lg font-display font-bold text-slate-200 line-clamp-1 hover:text-emerald-400 cursor-pointer transition-colors"
           >
-            {addon.name}
+            {addon.name || "Add-on Tanpa Nama"}
           </h3>
 
           {/* Addon Description Snippet */}
           <p className="text-xs text-slate-400 mt-2 line-clamp-2 leading-relaxed">
-            {addon.description}
+            {addon.description || "Tidak ada deskripsi."}
           </p>
         </div>
 
@@ -101,11 +101,11 @@ export default function AddonCard({ addon, onOpenDetails, onDownload }: AddonCar
           <div className="flex items-center gap-3 text-xs text-slate-500 font-mono">
             <span className="flex items-center gap-1 hover:text-emerald-400 transition-colors" title="Jumlah unduhan">
               <Download size={13} className="text-slate-500" />
-              {addon.downloads}
+              {addon.downloads || 0}
             </span>
             <span className="flex items-center gap-1 hover:text-blue-400 transition-colors" title="Komentar">
               <MessageSquare size={13} className="text-slate-500" />
-              {addon.comments.length}
+              {(addon.comments || []).length}
             </span>
           </div>
 
