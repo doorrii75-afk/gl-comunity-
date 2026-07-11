@@ -24,4 +24,6 @@ export interface Addon {
   comments: Comment[];
   createdAt: string;
   author: string;
+  ratingSum?: number;
+  ratingCount?: number;
 }

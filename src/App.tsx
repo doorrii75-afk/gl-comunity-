@@ -248,6 +248,48 @@ export default function App() {
     }
   };
 
+  // Handle rating submit
+  const handleAddRating = async (addonId: string, rating: number): Promise<boolean> => {
+    try {
+      const response = await fetch(`/api/addons/${addonId}/rate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ rating }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Gagal mengirim rating.");
+      }
+
+      const data = await response.json();
+
+      // Update local addons list state and selectedAddon details synchronously
+      setAddons((prev) =>
+        prev.map((a) => {
+          if (a.id === addonId) {
+            const updatedAddon = {
+              ...a,
+              ratingSum: data.ratingSum,
+              ratingCount: data.ratingCount
+            };
+            if (selectedAddon && selectedAddon.id === addonId) {
+              setSelectedAddon(updatedAddon);
+            }
+            return updatedAddon;
+          }
+          return a;
+        })
+      );
+
+      return true;
+    } catch (err) {
+      console.error("Error adding rating:", err);
+      return false;
+    }
+  };
+
   // Handle deleting an addon
   const handleDeleteAddon = async (addonId: string): Promise<void> => {
     // 1. Save original state for backup
@@ -936,6 +978,7 @@ export default function App() {
             onClose={() => setSelectedAddon(null)}
             onDownload={handleDownload}
             onAddComment={handleAddComment}
+            onAddRating={handleAddRating}
             isAdminVerified={isAdminVerified}
             onEditAddon={handleEditAddon}
             onDeleteAddon={handleDeleteAddon}

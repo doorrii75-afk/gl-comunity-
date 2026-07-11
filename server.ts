@@ -78,12 +78,14 @@ const DEFAULT_ADDONS = [
     ],
     createdAt: "2026-07-01T12:00:00Z",
     author: "GL Admin",
-    color: "#3b82f6"
+    color: "#3b82f6",
+    ratingSum: 24,
+    ratingCount: 5
   },
   {
     id: "addon-2",
     name: "Modern Furniture DecoCraft",
-    description: "Hiasi rumah modern impianmu dengan ratusan furnitur interaktif! Dilengkapi kulkas fungsional yang bisa menyimpan makanan, sofa empuk untuk bersantai, TV LED yang bisa dinyalakan, lampu tidur dengan tingkat kecerahan dinamis, hingga set wastafel dan toilet modern. Sangat cocok untuk pemain kreatif maupun survival dekoratif.",
+    description: "Hiasi rumah modern impianmu dengan ratusan furnitur interaktif! Dilengkapi kulkas fungsional yang bisa menyimpan makanan, sofa empuk untuk bersantai, TV LED yang bisa dinyalakan, lampu tidur dengan tingkat kecerahan dinamis, hingga set wastafel and toilet modern. Sangat cocok untuk pemain kreatif maupun survival dekoratif.",
     category: "Kreatif",
     compatibleVersion: "1.20.x - 1.21.x",
     coverUrl: "/api/addons/addon-2/cover",
@@ -101,7 +103,9 @@ const DEFAULT_ADDONS = [
     ],
     createdAt: "2026-07-03T10:00:00Z",
     author: "GL Admin",
-    color: "#ec4899"
+    color: "#ec4899",
+    ratingSum: 14,
+    ratingCount: 3
   },
   {
     id: "addon-3",
@@ -124,7 +128,9 @@ const DEFAULT_ADDONS = [
     ],
     createdAt: "2026-07-04T08:30:00Z",
     author: "GL Admin",
-    color: "#f59e0b"
+    color: "#f59e0b",
+    ratingSum: 19,
+    ratingCount: 4
   },
   {
     id: "addon-4",
@@ -140,7 +146,9 @@ const DEFAULT_ADDONS = [
     comments: [],
     createdAt: "2026-07-05T15:10:00Z",
     author: "GL Admin",
-    color: "#10b981"
+    color: "#10b981",
+    ratingSum: 18,
+    ratingCount: 4
   },
   {
     id: "addon-5",
@@ -163,7 +171,9 @@ const DEFAULT_ADDONS = [
     ],
     createdAt: "2026-07-06T09:00:00Z",
     author: "GL Admin",
-    color: "#8b5cf6"
+    color: "#8b5cf6",
+    ratingSum: 10,
+    ratingCount: 2
   }
 ];
 
@@ -450,7 +460,9 @@ app.post("/api/addons", async (req, res) => {
     downloads: 0,
     comments: [],
     createdAt: new Date().toISOString(),
-    author: author || "Admin"
+    author: author || "Admin",
+    ratingSum: 0,
+    ratingCount: 0
   };
 
   // 1. Store locally immediately
@@ -657,6 +669,53 @@ app.post("/api/addons/:id/comments", async (req, res) => {
   }
 
   res.status(201).json(newComment);
+});
+
+// API: Add rating to an addon
+app.post("/api/addons/:id/rate", async (req, res) => {
+  const { id } = req.params;
+  const { rating } = req.body;
+
+  const numericRating = parseInt(rating, 10);
+  if (isNaN(numericRating) || numericRating < 1 || numericRating > 5) {
+    return res.status(400).json({ error: "Rating harus berupa angka antara 1 sampai 5." });
+  }
+
+  // 1. Save locally first
+  const localAddon = localAddons[id];
+  if (localAddon) {
+    localAddon.ratingSum = (localAddon.ratingSum || 0) + numericRating;
+    localAddon.ratingCount = (localAddon.ratingCount || 0) + 1;
+    saveLocalDb();
+  }
+
+  // 2. Try to sync to Firestore
+  if (!isFirestoreExhausted) {
+    try {
+      if (!db) throw new Error("Database tidak terhubung.");
+      const addonRef = doc(db, "addons", id);
+      const docSnap = await getDoc(addonRef);
+      if (docSnap.exists()) {
+        const addonData = docSnap.data();
+        const currentSum = addonData.ratingSum || 0;
+        const currentCount = addonData.ratingCount || 0;
+        
+        await updateDoc(addonRef, {
+          ratingSum: currentSum + numericRating,
+          ratingCount: currentCount + 1
+        });
+      }
+    } catch (error: any) {
+      checkFirestoreError(error);
+      console.warn("Gagal sinkronisasi rating ke Firestore (disimpan secara lokal):", error.message);
+    }
+  }
+
+  res.json({
+    success: true,
+    ratingSum: localAddon ? (localAddon.ratingSum || numericRating) : numericRating,
+    ratingCount: localAddon ? (localAddon.ratingCount || 1) : 1
+  });
 });
 
 // API: Update an existing addon

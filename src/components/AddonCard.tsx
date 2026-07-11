@@ -5,7 +5,7 @@
 
 import React from "react";
 import { motion } from "motion/react";
-import { Download, MessageSquare, Tag, Eye } from "lucide-react";
+import { Download, MessageSquare, Tag, Eye, Star } from "lucide-react";
 import { Addon } from "../types";
 
 interface AddonCardProps {
@@ -56,11 +56,29 @@ export default function AddonCard({ addon, onOpenDetails, onDownload }: AddonCar
       {/* Details Container */}
       <div className="p-5 flex-1 flex flex-col justify-between">
         <div className="mb-4">
-          {/* Creator and date */}
-          <div className="flex items-center gap-2 text-[11px] font-mono text-slate-500 mb-2">
+          {/* Creator and date with rating */}
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-mono text-slate-500 mb-2">
             <span>Oleh {addon.author}</span>
             <span>•</span>
             <span>{new Date(addon.createdAt).toLocaleDateString("id-ID", { month: "short", day: "numeric" })}</span>
+            {addon.ratingCount && addon.ratingCount > 0 ? (
+              <>
+                <span>•</span>
+                <span className="flex items-center gap-0.5 text-amber-400 font-bold" title={`Rating: ${(addon.ratingSum! / addon.ratingCount).toFixed(1)} dari 5`}>
+                  <Star size={11} className="fill-amber-400 stroke-amber-400" />
+                  <span>{(addon.ratingSum! / addon.ratingCount).toFixed(1)}</span>
+                  <span className="text-[10px] text-slate-500 font-normal">({addon.ratingCount})</span>
+                </span>
+              </>
+            ) : (
+              <>
+                <span>•</span>
+                <span className="flex items-center gap-0.5 text-slate-500" title="Belum ada penilaian">
+                  <Star size={11} />
+                  <span>Belum dinilai</span>
+                </span>
+              </>
+            )}
           </div>
 
           {/* Addon Name */}

@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { ChevronLeft, ChevronRight, Download, Tag, Info } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Tag, Info, Star } from "lucide-react";
 import { Addon } from "../types";
 
 interface AddonSliderProps {
@@ -171,6 +171,19 @@ export default function AddonSlider({ addons, onOpenDetails, onDownload }: Addon
                 <div className="h-1.5 w-1.5 rounded-full bg-slate-700" />
                 <div>
                   Ukuran: <span className="text-slate-200">{currentAddon.fileSize}</span>
+                </div>
+                <div className="h-1.5 w-1.5 rounded-full bg-slate-700" />
+                <div className="flex items-center gap-1">
+                  Rating:{" "}
+                  {currentAddon.ratingCount && currentAddon.ratingCount > 0 ? (
+                    <span className="flex items-center gap-0.5 text-amber-400 font-bold">
+                      <Star size={12} className="fill-amber-400 stroke-amber-400" />
+                      <span>{(currentAddon.ratingSum! / currentAddon.ratingCount).toFixed(1)}</span>
+                      <span className="text-[10px] text-slate-500 font-normal">({currentAddon.ratingCount})</span>
+                    </span>
+                  ) : (
+                    <span className="text-slate-500">Belum dinilai</span>
+                  )}
                 </div>
               </div>
             </motion.div>

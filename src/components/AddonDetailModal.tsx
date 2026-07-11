@@ -23,7 +23,8 @@ import {
   FileCode,
   Image as ImageIcon,
   AlertTriangle,
-  Loader2
+  Loader2,
+  Star
 } from "lucide-react";
 import { Addon, Comment } from "../types";
 
@@ -32,6 +33,7 @@ interface AddonDetailModalProps {
   onClose: () => void;
   onDownload: (addon: Addon) => any;
   onAddComment: (addonId: string, username: string, text: string) => Promise<Comment | null>;
+  onAddRating: (addonId: string, rating: number) => Promise<boolean>;
   isAdminVerified?: boolean;
   onEditAddon?: (addonId: string, updatedFields: any) => Promise<boolean>;
   onDeleteAddon?: (addonId: string) => Promise<void>;
@@ -42,6 +44,7 @@ export default function AddonDetailModal({
   onClose,
   onDownload,
   onAddComment,
+  onAddRating,
   isAdminVerified = false,
   onEditAddon,
   onDeleteAddon
@@ -76,6 +79,42 @@ export default function AddonDetailModal({
   const [isDeleting, setIsDeleting] = useState(false);
   const [editErrorMsg, setEditErrorMsg] = useState("");
   const [isDownloading, setIsDownloading] = useState(false);
+
+  // Rating states
+  const [userRating, setUserRating] = useState<number>(0);
+  const [hoverRating, setHoverRating] = useState<number>(0);
+  const [isRatingSubmitted, setIsRatingSubmitted] = useState<boolean>(false);
+  const [isSubmittingRating, setIsSubmittingRating] = useState<boolean>(false);
+
+  React.useEffect(() => {
+    if (addon) {
+      const saved = localStorage.getItem(`rated_${addon.id}`);
+      if (saved) {
+        setUserRating(parseInt(saved, 10));
+        setIsRatingSubmitted(true);
+      } else {
+        setUserRating(0);
+        setIsRatingSubmitted(false);
+      }
+    }
+  }, [addon]);
+
+  const handleRate = async (star: number) => {
+    if (isRatingSubmitted || isSubmittingRating) return;
+    setIsSubmittingRating(true);
+    try {
+      const success = await onAddRating(addon.id, star);
+      if (success) {
+        localStorage.setItem(`rated_${addon.id}`, star.toString());
+        setUserRating(star);
+        setIsRatingSubmitted(true);
+      }
+    } catch (err) {
+      console.error("Gagal mengirim rating:", err);
+    } finally {
+      setIsSubmittingRating(false);
+    }
+  };
 
   const handleDownloadClick = async () => {
     setIsDownloading(true);
@@ -591,6 +630,21 @@ export default function AddonDetailModal({
                         <Calendar size={14} className="text-slate-500" />
                         <span>Diupload: {new Date(addon.createdAt).toLocaleDateString("id-ID", { year: "numeric", month: "long", day: "numeric" })}</span>
                       </div>
+                      <div className="h-1 w-1 bg-slate-700 rounded-full" />
+                      <div className="flex items-center gap-1.5">
+                        {addon.ratingCount && addon.ratingCount > 0 ? (
+                          <div className="flex items-center gap-1 text-amber-400 font-bold">
+                            <Star size={14} className="fill-amber-400 stroke-amber-400" />
+                            <span>{(addon.ratingSum! / addon.ratingCount).toFixed(1)} / 5</span>
+                            <span className="text-slate-500 text-[10px] font-normal">({addon.ratingCount} rating)</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1 text-slate-500">
+                            <Star size={14} />
+                            <span>Belum dinilai</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -652,6 +706,55 @@ export default function AddonDetailModal({
                     <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-line bg-slate-950/20 p-5 rounded-2xl border border-slate-800/30">
                       {addon.description}
                     </p>
+
+                    {/* Interactive Star Rating Widget */}
+                    <div className="bg-slate-950/30 p-5 rounded-2xl border border-slate-800/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-2">
+                      <div>
+                        <h4 className="text-sm font-bold text-slate-200">Bagaimana menurut Anda add-on ini?</h4>
+                        <p className="text-xs text-slate-400 mt-1">Berikan penilaian bintang untuk membantu pembuat add-on.</p>
+                      </div>
+
+                      <div className="flex flex-col items-start sm:items-end gap-1.5 shrink-0">
+                        <div className="flex items-center gap-1">
+                          {[1, 2, 3, 4, 5].map((star) => {
+                            const isFilled = hoverRating ? star <= hoverRating : star <= userRating;
+                            return (
+                              <button
+                                key={star}
+                                type="button"
+                                disabled={isRatingSubmitted || isSubmittingRating}
+                                onClick={() => handleRate(star)}
+                                onMouseEnter={() => !isRatingSubmitted && setHoverRating(star)}
+                                onMouseLeave={() => !isRatingSubmitted && setHoverRating(0)}
+                                className={`p-1 rounded-lg transition-all ${
+                                  isRatingSubmitted 
+                                    ? "cursor-default text-amber-400" 
+                                    : "hover:bg-slate-800/50 hover:scale-110 active:scale-95 cursor-pointer text-slate-400"
+                                }`}
+                                title={`Nilai ${star} Bintang`}
+                              >
+                                <Star
+                                  size={22}
+                                  className={`transition-all ${
+                                    isFilled 
+                                      ? "fill-amber-400 stroke-amber-400" 
+                                      : "stroke-slate-600 hover:stroke-slate-400"
+                                  } ${isSubmittingRating ? "animate-pulse" : ""}`}
+                                />
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <span className="text-[10px] font-mono text-slate-500">
+                          {isRatingSubmitted 
+                            ? `Terima kasih! Anda menilai ${userRating} bintang.` 
+                            : isSubmittingRating 
+                              ? "Mengirim penilaian..." 
+                              : "Klik bintang untuk mengirim"
+                          }
+                        </span>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Right Column: Comments Section */}
