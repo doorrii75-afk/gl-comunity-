@@ -14,6 +14,19 @@ import AddonDetailModal from "./components/AddonDetailModal";
 import AddonUploadForm from "./components/AddonUploadForm";
 import ModrinthExplore from "./components/ModrinthExplore";
 
+const WhatsAppIcon = ({ size = 16, className = "" }: { size?: number; className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    width={size}
+    height={size}
+    fill="currentColor"
+    className={className}
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.746.953 3.71 1.455 5.703 1.456h.004c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+  </svg>
+);
+
 export default function App() {
   const [addons, setAddons] = useState<Addon[]>([]);
   const [loading, setLoading] = useState(true);
@@ -112,7 +125,7 @@ export default function App() {
   // Real-time Notification States & Audio Synthesizer
   const [notifications, setNotifications] = useState<any[]>(() => {
     try {
-      const saved = localStorage.getItem("glcom_notifications");
+      const saved = localStorage.getItem("heavencraft_notifications") || localStorage.getItem("glcom_notifications");
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
@@ -168,7 +181,7 @@ export default function App() {
 
     setNotifications(prev => {
       const updated = [newNotif, ...prev];
-      localStorage.setItem("glcom_notifications", JSON.stringify(updated));
+      localStorage.setItem("heavencraft_notifications", JSON.stringify(updated));
       return updated;
     });
 
@@ -217,7 +230,7 @@ export default function App() {
 
     setNotifications(prev => {
       const updated = [newNotif, ...prev];
-      localStorage.setItem("glcom_notifications", JSON.stringify(updated));
+      localStorage.setItem("heavencraft_notifications", JSON.stringify(updated));
       return updated;
     });
 
@@ -616,194 +629,264 @@ export default function App() {
             </div>
           </div>
 
-          {/* Right Section: Notification Panel Control */}
-          <div className="relative">
-            <button
-              onClick={() => setIsNotifDropdownOpen(!isNotifDropdownOpen)}
-              className={`relative p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-center ${
-                isNotifDropdownOpen
-                  ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-                  : "bg-slate-900 hover:bg-slate-850 border-slate-800 text-slate-400 hover:text-slate-200"
-              }`}
-              title="Notifikasi"
+          {/* Right Section: Header Controls */}
+          <div className="flex items-center gap-3">
+            
+            {/* Animated WhatsApp Channel Link Button */}
+            <motion.a
+              href="https://whatsapp.com/channel/0029VbDP78KHQbSDJWQp6H2n"
+              target="_blank"
+              rel="noopener noreferrer"
+              animate={{ 
+                boxShadow: [
+                  "0 0 8px rgba(16,185,129,0.15)",
+                  "0 0 16px rgba(16,185,129,0.35)",
+                  "0 0 8px rgba(16,185,129,0.15)"
+                ]
+              }}
+              transition={{
+                duration: 2.5,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+              whileHover={{ scale: 1.05, y: -1 }}
+              whileTap={{ scale: 0.95 }}
+              className="relative px-3 py-2 md:px-3.5 md:py-2.5 rounded-xl border bg-slate-950/80 border-emerald-500/30 text-emerald-400 hover:text-emerald-300 hover:border-emerald-400 transition-all cursor-pointer flex items-center gap-2 font-mono text-xs font-bold shadow-[0_0_10px_rgba(16,185,129,0.1)]"
+              title="Ikuti Saluran WhatsApp Heaven Craft UPDATE"
             >
-              <Bell size={18} className={notifications.some(n => !n.read) ? "animate-bounce" : ""} />
-              
-              {/* Unread dot indicator with spring animation */}
+              <div className="relative flex items-center justify-center">
+                <span className="absolute h-2 w-2 rounded-full bg-emerald-400 animate-ping opacity-75" />
+                <WhatsAppIcon size={16} className="relative z-10 transition-transform duration-300 hover:scale-110" />
+              </div>
+              <span className="hidden sm:inline">Saluran WA</span>
+            </motion.a>
+
+            {/* Notification Panel Control */}
+            <div className="relative">
+              <button
+                onClick={() => setIsNotifDropdownOpen(!isNotifDropdownOpen)}
+                className={`relative p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-center ${
+                  isNotifDropdownOpen
+                    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                    : "bg-slate-900 hover:bg-slate-850 border-slate-800 text-slate-400 hover:text-slate-200"
+                }`}
+                title="Notifikasi"
+              >
+                <Bell size={18} className={notifications.some(n => !n.read) ? "animate-bounce" : ""} />
+                
+                {/* Unread dot indicator with spring animation */}
+                <AnimatePresence>
+                  {notifications.some(n => !n.read) && (
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      exit={{ scale: 0 }}
+                      className="absolute top-1.5 right-1.5 flex h-3 w-3"
+                    >
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500 border border-slate-950"></span>
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </button>
+
+              {/* Notification Dropdown Menu */}
               <AnimatePresence>
-                {notifications.some(n => !n.read) && (
-                  <motion.span
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    exit={{ scale: 0 }}
-                    className="absolute top-1.5 right-1.5 flex h-3 w-3"
-                  >
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500 border border-slate-950"></span>
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </button>
-
-            {/* Notification Dropdown Menu */}
-            <AnimatePresence>
-              {isNotifDropdownOpen && (
-                <>
-                  {/* Backdrop click barrier */}
-                  <div 
-                    className="fixed inset-0 z-30" 
-                    onClick={() => setIsNotifDropdownOpen(false)} 
-                  />
-                  
-                  <motion.div
-                    initial={{ opacity: 0, y: 15, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 15, scale: 0.95 }}
-                    transition={{ type: "spring", stiffness: 350, damping: 24 }}
-                    className="absolute right-0 mt-3 z-40 w-80 sm:w-96 bg-slate-950/95 border border-slate-800/80 rounded-2xl shadow-2xl backdrop-blur-xl overflow-hidden p-1 flex flex-col text-left"
-                  >
-                    {/* Panel Header */}
-                    <div className="p-4 border-b border-slate-900/60 flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-mono font-bold uppercase tracking-wide text-slate-400">Pemberitahuan</span>
-                        {notifications.filter(n => !n.read).length > 0 && (
-                          <span className="bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md">
-                            {notifications.filter(n => !n.read).length} Baru
-                          </span>
-                        )}
-                      </div>
-                      
-                      <div className="flex items-center gap-2">
-                        {notifications.length > 0 && (
-                          <button
-                            onClick={() => {
-                              const updated = notifications.map(n => ({ ...n, read: true }));
-                              setNotifications(updated);
-                              localStorage.setItem("glcom_notifications", JSON.stringify(updated));
-                            }}
-                            className="text-[10px] font-mono text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1 transition-colors cursor-pointer"
-                            title="Tandai semua dibaca"
-                          >
-                            <CheckCheck size={11} />
-                            Baca Semua
-                          </button>
-                        )}
-                        <span className="text-slate-800">|</span>
-                        <button
-                          onClick={triggerSimulatedNotification}
-                          className="text-[10px] font-mono text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 transition-colors cursor-pointer"
-                          title="Simulasi notifikasi add-on baru"
-                        >
-                          Simulasi
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Notification Feed */}
-                    <div className="max-h-80 overflow-y-auto no-scrollbar flex-1 divide-y divide-slate-950">
-                      {notifications.length === 0 ? (
-                        <div className="py-12 px-4 flex flex-col items-center justify-center text-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-slate-900 border border-slate-800/60 flex items-center justify-center text-slate-600">
-                            <Bell size={18} />
-                          </div>
-                          <div>
-                            <p className="text-xs font-bold text-slate-400">Belum ada notifikasi</p>
-                            <p className="text-[10px] text-slate-600 mt-1">Anda akan menerima pemberitahuan instan saat add-on baru diunggah oleh komunitas.</p>
-                          </div>
+                {isNotifDropdownOpen && (
+                  <>
+                    {/* Backdrop click barrier */}
+                    <div 
+                      className="fixed inset-0 z-30" 
+                      onClick={() => setIsNotifDropdownOpen(false)} 
+                    />
+                    
+                    <motion.div
+                      initial={{ opacity: 0, y: 15, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 15, scale: 0.95 }}
+                      transition={{ type: "spring", stiffness: 350, damping: 24 }}
+                      className="absolute right-0 mt-3 z-40 w-80 sm:w-96 bg-slate-950/95 border border-slate-800/80 rounded-2xl shadow-2xl backdrop-blur-xl overflow-hidden p-1 flex flex-col text-left"
+                    >
+                      {/* Panel Header */}
+                      <div className="p-4 border-b border-slate-900/60 flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-mono font-bold uppercase tracking-wide text-slate-400">Pemberitahuan</span>
+                          {notifications.filter(n => !n.read).length > 0 && (
+                            <span className="bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md">
+                              {notifications.filter(n => !n.read).length} Baru
+                            </span>
+                          )}
                         </div>
-                      ) : (
-                        notifications.map((notif) => (
-                          <div
-                            key={notif.id}
-                            className={`p-3.5 flex gap-3 transition-colors hover:bg-slate-900/40 relative ${
-                              !notif.read ? "bg-emerald-500/[0.02]" : ""
-                            }`}
-                          >
-                            {/* Blue dot indicator for unread */}
-                            {!notif.read && (
-                              <span className="absolute top-4 left-2.5 h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                            )}
-                            
-                            {/* Icon or Thumbnail */}
-                            <div className="w-9 h-9 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0 text-emerald-400">
-                              <Sparkles size={16} />
-                            </div>
-
-                            {/* Message detail */}
-                            <div className="flex-1 min-w-0 space-y-1">
-                              <div className="flex items-center justify-between gap-2">
-                                <span className={`text-[10px] font-mono uppercase font-bold tracking-wide ${
-                                  notif.isSimulation ? "text-amber-400" : "text-emerald-500"
-                                }`}>
-                                  {notif.category || "Addon baru"}
-                                </span>
-                                <span className="text-[9px] font-mono text-slate-600 shrink-0">
-                                  {new Date(notif.createdAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
-                                </span>
-                              </div>
-                              <h5 className="text-xs font-bold text-slate-200 leading-snug">
-                                {notif.title}
-                              </h5>
-                              <p className="text-[11px] text-slate-400 leading-normal break-words">
-                                {notif.message}
-                              </p>
-                              
-                              {/* Open detail trigger */}
-                              {notif.addon && (
-                                <button
-                                  onClick={() => {
-                                    // Mark single notification as read
-                                    const updated = notifications.map(n => n.id === notif.id ? { ...n, read: true } : n);
-                                    setNotifications(updated);
-                                    localStorage.setItem("glcom_notifications", JSON.stringify(updated));
-                                    
-                                    // Open detail modal
-                                    setSelectedAddon(notif.addon);
-                                    setIsNotifDropdownOpen(false);
-                                  }}
-                                  className="text-[10px] font-mono text-emerald-400 font-bold hover:underline transition-all pt-1 flex items-center gap-1 cursor-pointer"
-                                >
-                                  Lihat Detail Add-on &rarr;
-                                </button>
-                              )}
-                            </div>
-
-                            {/* Delete specific notification */}
+                        
+                        <div className="flex items-center gap-2">
+                          {notifications.length > 0 && (
                             <button
                               onClick={() => {
-                                const updated = notifications.filter(n => n.id !== notif.id);
+                                const updated = notifications.map(n => ({ ...n, read: true }));
                                 setNotifications(updated);
-                                localStorage.setItem("glcom_notifications", JSON.stringify(updated));
+                                localStorage.setItem("heavencraft_notifications", JSON.stringify(updated));
                               }}
-                              className="text-slate-700 hover:text-slate-400 p-1 rounded-md self-start transition-colors cursor-pointer"
-                              title="Hapus"
+                              className="text-[10px] font-mono text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                              title="Tandai semua dibaca"
                             >
-                              <X size={11} />
+                              <CheckCheck size={11} />
+                              Baca Semua
                             </button>
-                          </div>
-                        ))
-                      )}
-                    </div>
-
-                    {/* Footer Clear All */}
-                    {notifications.length > 0 && (
-                      <div className="p-2 bg-slate-950 border-t border-slate-900/60 flex items-center justify-end">
-                        <button
-                          onClick={() => {
-                            setNotifications([]);
-                            localStorage.setItem("glcom_notifications", JSON.stringify([]));
-                          }}
-                          className="text-[10px] font-mono text-rose-400 hover:text-rose-300 font-bold px-2.5 py-1.5 rounded-lg hover:bg-rose-500/5 transition-colors flex items-center gap-1 cursor-pointer"
-                        >
-                          <Trash2 size={11} />
-                          Bersihkan Semua
-                        </button>
+                          )}
+                          <span className="text-slate-800">|</span>
+                          <button
+                            onClick={triggerSimulatedNotification}
+                            className="text-[10px] font-mono text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                            title="Simulasi notifikasi add-on baru"
+                          >
+                            Simulasi
+                          </button>
+                        </div>
                       </div>
-                    )}
-                  </motion.div>
-                </>
-              )}
-            </AnimatePresence>
+
+                      {/* Animated WhatsApp Channel Promo Card */}
+                      <motion.a
+                        href="https://whatsapp.com/channel/0029VbDP78KHQbSDJWQp6H2n"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        whileHover={{ scale: 1.01, y: -0.5 }}
+                        whileTap={{ scale: 0.99 }}
+                        className="m-2 p-3 rounded-xl bg-gradient-to-r from-emerald-600/20 via-emerald-700/10 to-teal-800/10 border border-emerald-500/30 hover:border-emerald-400 flex items-center gap-3 cursor-pointer group relative overflow-hidden transition-all shadow-[0_0_15px_rgba(16,185,129,0.1)] hover:shadow-[0_0_20px_rgba(16,185,129,0.2)]"
+                      >
+                        {/* Shimmer effect overlay */}
+                        <div className="absolute inset-0 bg-emerald-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-350" />
+                        
+                        {/* WhatsApp Animated Logo container */}
+                        <div className="relative shrink-0 w-9 h-9 rounded-full bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-400 group-hover:text-emerald-300">
+                          {/* Pulsing ring */}
+                          <span className="absolute inset-0 rounded-full border border-emerald-400 opacity-50 animate-ping" style={{ animationDuration: "3s" }} />
+                          <WhatsAppIcon size={16} className="transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6" />
+                        </div>
+
+                        {/* Text description details */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[9px] font-mono font-bold tracking-wider uppercase text-emerald-300">WhatsApp Channel</span>
+                            <span className="inline-flex h-1 w-1 rounded-full bg-emerald-400 animate-pulse" />
+                          </div>
+                          <h4 className="text-xs font-bold text-slate-200 group-hover:text-white leading-snug">
+                            Ikuti Heaven Craft UPDATE
+                          </h4>
+                          <p className="text-[10px] text-slate-400 mt-0.5 leading-snug line-clamp-1 group-hover:text-slate-300">
+                            Dapatkan info rilis add-on instan di WhatsApp kamu!
+                          </p>
+                        </div>
+
+                        {/* Navigation chevron arrow */}
+                        <ChevronRight size={14} className="text-emerald-400 group-hover:text-emerald-300 group-hover:translate-x-0.5 transition-transform shrink-0" />
+                      </motion.a>
+
+                      {/* Notification Feed */}
+                      <div className="max-h-80 overflow-y-auto no-scrollbar flex-1 divide-y divide-slate-950">
+                        {notifications.length === 0 ? (
+                          <div className="py-12 px-4 flex flex-col items-center justify-center text-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-slate-900 border border-slate-800/60 flex items-center justify-center text-slate-600">
+                              <Bell size={18} />
+                            </div>
+                            <div>
+                              <p className="text-xs font-bold text-slate-400">Belum ada notifikasi</p>
+                              <p className="text-[10px] text-slate-600 mt-1">Anda akan menerima pemberitahuan instan saat add-on baru diunggah oleh komunitas.</p>
+                            </div>
+                          </div>
+                        ) : (
+                          notifications.map((notif) => (
+                            <div
+                              key={notif.id}
+                              className={`p-3.5 flex gap-3 transition-colors hover:bg-slate-900/40 relative ${
+                                !notif.read ? "bg-emerald-500/[0.02]" : ""
+                              }`}
+                            >
+                              {/* Blue dot indicator for unread */}
+                              {!notif.read && (
+                                <span className="absolute top-4 left-2.5 h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                              )}
+                              
+                              {/* Icon or Thumbnail */}
+                              <div className="w-9 h-9 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0 text-emerald-400">
+                                <Sparkles size={16} />
+                              </div>
+
+                              {/* Message detail */}
+                              <div className="flex-1 min-w-0 space-y-1">
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className={`text-[10px] font-mono uppercase font-bold tracking-wide ${
+                                    notif.isSimulation ? "text-amber-400" : "text-emerald-500"
+                                  }`}>
+                                    {notif.category || "Addon baru"}
+                                  </span>
+                                  <span className="text-[9px] font-mono text-slate-600 shrink-0">
+                                    {new Date(notif.createdAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
+                                  </span>
+                                </div>
+                                <h5 className="text-xs font-bold text-slate-200 leading-snug">
+                                  {notif.title}
+                                </h5>
+                                <p className="text-[11px] text-slate-400 leading-normal break-words">
+                                  {notif.message}
+                                </p>
+                                
+                                {/* Open detail trigger */}
+                                {notif.addon && (
+                                  <button
+                                    onClick={() => {
+                                      // Mark single notification as read
+                                      const updated = notifications.map(n => n.id === notif.id ? { ...n, read: true } : n);
+                                      setNotifications(updated);
+                                      localStorage.setItem("heavencraft_notifications", JSON.stringify(updated));
+                                      
+                                      // Open detail modal
+                                      setSelectedAddon(notif.addon);
+                                      setIsNotifDropdownOpen(false);
+                                    }}
+                                    className="text-[10px] font-mono text-emerald-400 font-bold hover:underline transition-all pt-1 flex items-center gap-1 cursor-pointer"
+                                  >
+                                    Lihat Detail Add-on &rarr;
+                                  </button>
+                                )}
+                              </div>
+
+                              {/* Delete specific notification */}
+                              <button
+                                onClick={() => {
+                                  const updated = notifications.filter(n => n.id !== notif.id);
+                                  setNotifications(updated);
+                                  localStorage.setItem("heavencraft_notifications", JSON.stringify(updated));
+                                }}
+                                className="text-slate-700 hover:text-slate-400 p-1 rounded-md self-start transition-colors cursor-pointer"
+                                title="Hapus"
+                              >
+                                <X size={11} />
+                              </button>
+                            </div>
+                          ))
+                        )}
+                      </div>
+
+                      {/* Footer Clear All */}
+                      {notifications.length > 0 && (
+                        <div className="p-2 bg-slate-950 border-t border-slate-900/60 flex items-center justify-end">
+                          <button
+                            onClick={() => {
+                              setNotifications([]);
+                              localStorage.setItem("heavencraft_notifications", JSON.stringify([]));
+                            }}
+                            className="text-[10px] font-mono text-rose-400 hover:text-rose-300 font-bold px-2.5 py-1.5 rounded-lg hover:bg-rose-500/5 transition-colors flex items-center gap-1 cursor-pointer"
+                          >
+                            <Trash2 size={11} />
+                            Bersihkan Semua
+                          </button>
+                        </div>
+                      )}
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
       </header>
