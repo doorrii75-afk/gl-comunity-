@@ -77,7 +77,7 @@ const DEFAULT_ADDONS = [
       }
     ],
     createdAt: "2026-07-01T12:00:00Z",
-    author: "GL Admin",
+    author: "Heaven Craft Admin",
     color: "#3b82f6",
     ratingSum: 24,
     ratingCount: 5
@@ -102,7 +102,7 @@ const DEFAULT_ADDONS = [
       }
     ],
     createdAt: "2026-07-03T10:00:00Z",
-    author: "GL Admin",
+    author: "Heaven Craft Admin",
     color: "#ec4899",
     ratingSum: 14,
     ratingCount: 3
@@ -127,7 +127,7 @@ const DEFAULT_ADDONS = [
       }
     ],
     createdAt: "2026-07-04T08:30:00Z",
-    author: "GL Admin",
+    author: "Heaven Craft Admin",
     color: "#f59e0b",
     ratingSum: 19,
     ratingCount: 4
@@ -145,7 +145,7 @@ const DEFAULT_ADDONS = [
     downloads: 1980,
     comments: [],
     createdAt: "2026-07-05T15:10:00Z",
-    author: "GL Admin",
+    author: "Heaven Craft Admin",
     color: "#10b981",
     ratingSum: 18,
     ratingCount: 4
@@ -170,7 +170,7 @@ const DEFAULT_ADDONS = [
       }
     ],
     createdAt: "2026-07-06T09:00:00Z",
-    author: "GL Admin",
+    author: "Heaven Craft Admin",
     color: "#8b5cf6",
     ratingSum: 10,
     ratingCount: 2
@@ -200,7 +200,7 @@ function seedLocalDbDefaults() {
     const coverBase64 = generateSvgCoverBase64(item.name, item.color);
     const { color, ...addonData } = item;
     
-    const dummyData = `// GL COM Minecraft Add-on File\n// Name: ${item.name}\n// Direct download without ads!\n// ID: ${item.id}`;
+    const dummyData = `// Heaven Craft Minecraft Add-on File\n// Name: ${item.name}\n// Direct download without ads!\n// ID: ${item.id}`;
     
     localAddons[item.id] = {
       ...addonData,
@@ -475,7 +475,7 @@ app.post("/api/addons", async (req, res) => {
       index++;
     }
   } else {
-    const dummyData = `// GL COM Minecraft Add-on File\n// Name: ${name}\n// Direct download without ads!\n// ID: ${id}`;
+    const dummyData = `// Heaven Craft Minecraft Add-on File\n// Name: ${name}\n// Direct download without ads!\n// ID: ${id}`;
     localChunks["chunk-0"] = Buffer.from(dummyData).toString("base64");
   }
 

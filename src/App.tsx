@@ -598,7 +598,7 @@ export default function App() {
           <div className="flex items-center gap-3">
             <div className="relative">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-emerald-400 flex items-center justify-center font-display font-black text-slate-950 shadow-[0_0_15px_rgba(16,185,129,0.3)]">
-                GL
+                HC
               </div>
               <span className="absolute -bottom-0.5 -right-0.5 flex h-2.5 w-2.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -608,7 +608,7 @@ export default function App() {
             
             <div>
               <h1 className="text-sm font-display font-black tracking-wider text-slate-100 uppercase">
-                GL Addon Store
+                Heaven Craft
               </h1>
               <p className="text-[10px] font-mono text-slate-500">
                 Minecraft Bedrock Edition
@@ -911,7 +911,7 @@ export default function App() {
         {loading && addons.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-32 gap-4">
             <div className="w-12 h-12 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin" />
-            <span className="text-sm font-mono text-slate-400">Menghubungkan ke GL COM Database...</span>
+            <span className="text-sm font-mono text-slate-400">Menghubungkan ke Heaven Craft Database...</span>
           </div>
         ) : error && addons.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center max-w-md mx-auto">
@@ -1195,7 +1195,7 @@ export default function App() {
                       Verifikasi Khusus Admin
                     </h2>
                     <p className="text-xs text-slate-400 leading-relaxed mb-6">
-                      Unggah berkas add-on Minecraft di GL COM dibatasi hanya untuk Admin yang sah. Silakan masukkan kode akses admin Anda.
+                      Unggah berkas add-on Minecraft di Heaven Craft dibatasi hanya untuk Admin yang sah. Silakan masukkan kode akses admin Anda.
                     </p>
 
                     <form
