@@ -99,6 +99,7 @@ export default function ModrinthExplore() {
   const [downloadingVersionId, setDownloadingVersionId] = useState<string | null>(null);
 
   const isInitialMount = useRef(true);
+  const observerTargetRef = useRef<HTMLDivElement>(null);
 
   // Main search function
   const handleSearch = async (isAppend = false) => {
@@ -177,6 +178,29 @@ export default function ModrinthExplore() {
     if (loadingMore || !hasMore) return;
     handleSearch(true);
   };
+
+  // Infinite Scroll IntersectionObserver
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore && !loading && projects.length > 0) {
+          handleSearch(true);
+        }
+      },
+      { threshold: 0.1, rootMargin: "300px" } // Load more slightly before reaching the absolute end
+    );
+
+    const currentTarget = observerTargetRef.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
+    }
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
+      }
+    };
+  }, [hasMore, loadingMore, loading, projects.length]);
 
   // Fetch versions when a project is selected
   const handleSelectProject = async (project: ModrinthProject) => {
@@ -498,28 +522,27 @@ export default function ModrinthExplore() {
             ))}
           </div>
 
-          {/* Load More Pagination Trigger */}
-          {hasMore && (
-            <div className="flex justify-center pt-2">
-              <button
-                disabled={loadingMore}
-                onClick={handleLoadMore}
-                className="bg-slate-950 hover:bg-slate-900 border border-slate-850 text-slate-300 hover:text-slate-100 text-xs font-bold px-8 py-3.5 rounded-2xl flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
-              >
-                {loadingMore ? (
-                  <>
-                    <Loader2 size={14} className="animate-spin text-emerald-400" />
-                    <span>Memuat Lebih Banyak...</span>
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw size={13} className="text-emerald-500 animate-spin-slow" />
-                    <span>Muat Add-on Lainnya</span>
-                  </>
-                )}
-              </button>
-            </div>
-          )}
+          {/* Infinite Scroll Indicator & Target */}
+          <div ref={observerTargetRef} className="w-full flex flex-col items-center justify-center py-8 gap-3">
+            {loadingMore && (
+              <div className="flex items-center gap-2 bg-slate-950 border border-slate-900/60 rounded-2xl px-6 py-3.5 shadow-xl">
+                <Loader2 size={16} className="animate-spin text-emerald-400" />
+                <span className="text-xs font-semibold text-slate-300 font-mono tracking-wide">
+                  Memuat add-on online lainnya...
+                </span>
+              </div>
+            )}
+            {!hasMore && projects.length > 0 && (
+              <div className="bg-slate-950/30 border border-slate-900/50 rounded-2xl px-6 py-4 text-center">
+                <span className="text-xs font-mono font-bold text-slate-500 uppercase tracking-wider block">
+                  🎉 Semua add-on Modrinth telah ditampilkan!
+                </span>
+                <span className="text-[10px] text-slate-600 font-mono block mt-1">
+                  Menampilkan total {projects.length} berkas online
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       )}
 

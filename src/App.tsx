@@ -438,6 +438,11 @@ export default function App() {
                     ))}
                   </div>
                 </section>
+
+                {/* 4. Online Add-on Explore Section */}
+                <section id="online-explore-section" className="space-y-5 pt-8 border-t border-slate-900/60">
+                  <ModrinthExplore />
+                </section>
               </motion.div>
             )}
 
@@ -708,18 +713,6 @@ export default function App() {
               </motion.div>
             )}
 
-            {/* TAB 5: MODRINTH (EXPLORE ONLINE) */}
-            {activeTab === "modrinth" && (
-              <motion.div
-                key="tab-modrinth"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -15 }}
-                transition={{ duration: 0.25 }}
-              >
-                <ModrinthExplore />
-              </motion.div>
-            )}
 
           </AnimatePresence>
         )}
@@ -784,25 +777,6 @@ export default function App() {
             )}
             <Search size={18} className={activeTab === "cari" ? "scale-110 text-emerald-400" : ""} />
             <span className="text-[9px] sm:text-[10px] tracking-wide uppercase font-semibold whitespace-nowrap">Cari</span>
-          </button>
-
-          {/* Menu Button: Online (Modrinth) */}
-          <button
-            id="nav-btn-modrinth"
-            onClick={() => setActiveTab("modrinth")}
-            className={`relative flex-1 flex flex-col items-center gap-1 py-1.5 px-2 rounded-xl transition-all cursor-pointer ${
-              activeTab === "modrinth" ? "text-emerald-400 font-bold" : "text-slate-500 hover:text-slate-300"
-            }`}
-          >
-            {activeTab === "modrinth" && (
-              <motion.span
-                layoutId="nav-glow-bubble"
-                className="absolute inset-0 bg-emerald-500/10 border border-emerald-500/20 rounded-xl -z-10"
-                transition={{ type: "spring", stiffness: 350, damping: 25 }}
-              />
-            )}
-            <Globe size={18} className={activeTab === "modrinth" ? "scale-110 text-emerald-400" : ""} />
-            <span className="text-[9px] sm:text-[10px] tracking-wide uppercase font-semibold whitespace-nowrap">Online</span>
           </button>
 
           {/* Menu Button: Tambah */}
