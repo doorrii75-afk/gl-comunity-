@@ -13,6 +13,7 @@ import AddonCard from "./components/AddonCard";
 import AddonDetailModal from "./components/AddonDetailModal";
 import AddonUploadForm from "./components/AddonUploadForm";
 import ModrinthExplore from "./components/ModrinthExplore";
+import heavencraftLogo from "./assets/images/heavencraft_logo_1783776928325.jpg";
 
 const WhatsAppIcon = ({ size = 16, className = "" }: { size?: number; className?: string }) => (
   <svg
@@ -610,9 +611,12 @@ export default function App() {
           {/* Logo & Brand Info */}
           <div className="flex items-center gap-3">
             <div className="relative">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-emerald-400 flex items-center justify-center font-display font-black text-slate-950 shadow-[0_0_15px_rgba(16,185,129,0.3)]">
-                HC
-              </div>
+              <img
+                src={heavencraftLogo}
+                alt="Heaven Craft Logo"
+                referrerPolicy="no-referrer"
+                className="w-10 h-10 rounded-xl object-cover border border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.35)] transition-transform duration-300 hover:scale-110"
+              />
               <span className="absolute -bottom-0.5 -right-0.5 flex h-2.5 w-2.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
