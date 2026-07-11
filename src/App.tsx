@@ -1288,7 +1288,7 @@ export default function App() {
                     <form
                       onSubmit={(e) => {
                         e.preventDefault();
-                        if (adminCodeInput === "1920") {
+                        if (adminCodeInput === "2010") {
                           setIsAdminVerified(true);
                           localStorage.setItem("glcom_admin_verified", "true");
                           setAdminCodeInput("");
@@ -1375,7 +1375,7 @@ export default function App() {
       </main>
 
       {/* Floating Bottom Menu Glassmorphism Navigation Dock (Mobile-First / Super Modern) */}
-      <nav id="floating-bottom-nav" className="fixed bottom-4 left-1/2 -translate-x-1/2 z-45 w-[94%] max-w-lg bg-slate-950/85 backdrop-blur-xl border border-slate-800/60 rounded-2xl px-2.5 py-2 shadow-2xl shadow-black/80">
+      <nav id="floating-bottom-nav" className="fixed bottom-4 left-1/2 -translate-x-1/2 z-45 w-[94%] max-w-lg bg-slate-950/40 backdrop-blur-2xl border border-white/10 rounded-3xl px-3 py-2.5 shadow-[0_12px_40px_rgba(0,0,0,0.8)] shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]">
         <div className="flex items-center justify-between relative gap-1">
           
           {/* Menu Button: Beranda */}

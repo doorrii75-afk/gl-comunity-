@@ -19,7 +19,6 @@ import {
   deleteDoc
 } from "firebase/firestore";
 import { Addon, Comment } from "./src/types.js";
-import { GoogleGenAI } from "@google/genai";
 
 const app = express();
 const PORT = 3000;
@@ -31,25 +30,6 @@ app.use(express.urlencoded({ limit: "50mb", extended: true }));
 // Initialize Firebase Client SDK
 const firebaseConfigPath = path.join(process.cwd(), "firebase-applet-config.json");
 let db: any = null;
-
-let geminiClient: GoogleGenAI | null = null;
-function getGeminiClient(): GoogleGenAI {
-  if (!geminiClient) {
-    const key = process.env.GEMINI_API_KEY;
-    if (!key) {
-      throw new Error("GEMINI_API_KEY environment variable is required but missing.");
-    }
-    geminiClient = new GoogleGenAI({
-      apiKey: key,
-      httpOptions: {
-        headers: {
-          "User-Agent": "aistudio-build",
-        }
-      }
-    });
-  }
-  return geminiClient;
-}
 
 // Helper to generate custom SVGs as cover page base64 images
 function generateSvgCoverBase64(title: string, color: string): string {
@@ -68,76 +48,6 @@ function generateSvgCoverBase64(title: string, color: string): string {
     <text x="50%" y="360" font-family="'JetBrains Mono', monospace" font-size="16" fill="#94a3b8" text-anchor="middle">MINECRAFT ADD-ON</text>
   </svg>`;
   return `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
-}
-
-// Generate premium cover using AI Gemini based on name and description
-async function generateAICoverBase64(name: string, description: string): Promise<string> {
-  try {
-    const ai = getGeminiClient();
-    const prompt = `A premium 3D rendered square cover artwork for a Minecraft Addon named "${name}". 
-Description of the addon: "${description || 'A unique Minecraft game enhancement'}".
-Visual style: Beautiful 3D voxel/blocky art, vibrant colors, clean and highly detailed, resembling official Minecraft marketplace key art.
-It should depict the theme of the addon. No text overlay, no letters, no UI, completely clean scenic art.`;
-
-    console.log(`Generating AI cover for addon: "${name}"...`);
-    const response = await ai.models.generateContent({
-      model: "gemini-3.1-flash-lite-image",
-      contents: {
-        parts: [{ text: prompt }]
-      },
-      config: {
-        imageConfig: {
-          aspectRatio: "1:1"
-        }
-      }
-    });
-
-    let coverBase64 = "";
-    if (response.candidates?.[0]?.content?.parts) {
-      for (const part of response.candidates[0].content.parts) {
-        if (part.inlineData) {
-          coverBase64 = `data:${part.inlineData.mimeType || 'image/jpeg'};base64,${part.inlineData.data}`;
-          break;
-        }
-      }
-    }
-
-    if (!coverBase64) {
-      console.log("No image returned from gemini-3.1-flash-lite-image, trying gemini-3.1-flash-image...");
-      const response2 = await ai.models.generateContent({
-        model: "gemini-3.1-flash-image",
-        contents: {
-          parts: [{ text: prompt }]
-        },
-        config: {
-          imageConfig: {
-            aspectRatio: "1:1",
-            imageSize: "1K"
-          }
-        }
-      });
-
-      if (response2.candidates?.[0]?.content?.parts) {
-        for (const part of response2.candidates[0].content.parts) {
-          if (part.inlineData) {
-            coverBase64 = `data:${part.inlineData.mimeType || 'image/jpeg'};base64,${part.inlineData.data}`;
-            break;
-          }
-        }
-      }
-    }
-
-    if (!coverBase64) {
-      throw new Error("Gemini returned empty parts");
-    }
-
-    return coverBase64;
-  } catch (err: any) {
-    console.error("Failed to generate AI cover, falling back to SVG:", err.message);
-    const colors = ["#10b981", "#3b82f6", "#ec4899", "#f59e0b", "#8b5cf6", "#ef4444"];
-    const randomColor = colors[Math.floor(Math.random() * colors.length)];
-    return generateSvgCoverBase64(name, randomColor);
-  }
 }
 
 const DEFAULT_ADDONS = [
@@ -432,23 +342,6 @@ app.get("/api/db-status", (req, res) => {
   });
 });
 
-// API: Generate cover using AI Gemini
-app.post("/api/addons/generate-cover", async (req, res) => {
-  const { name, description } = req.body;
-  if (!name) {
-    return res.status(400).json({ error: "Nama add-on wajib diisi terlebih dahulu untuk menghasilkan cover AI." });
-  }
-
-  try {
-    // Generate AI image using Gemini helper
-    const coverBase64 = await generateAICoverBase64(name, description);
-    res.json({ coverBase64 });
-  } catch (err: any) {
-    console.error("Gagal melakukan generate gambar dengan Gemini:", err.message);
-    res.status(500).json({ error: "Gagal membuat gambar dengan AI: " + err.message });
-  }
-});
-
 // API: Get all addons
 app.get("/api/addons", async (req, res) => {
   try {
@@ -551,7 +444,7 @@ app.post("/api/addons", async (req, res) => {
 
   let finalCoverBase64 = coverBase64;
   if (!finalCoverBase64) {
-    finalCoverBase64 = await generateAICoverBase64(name, description);
+    finalCoverBase64 = generateSvgCoverBase64(name, "#10b981");
   }
 
   const newAddon: Addon = {

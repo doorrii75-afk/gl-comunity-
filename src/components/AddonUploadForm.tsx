@@ -5,7 +5,7 @@
 
 import React, { useState, useRef } from "react";
 import { motion } from "motion/react";
-import { Upload, FileCode, Image, CheckCircle, AlertTriangle, ArrowRight, Sparkles } from "lucide-react";
+import { Upload, FileCode, Image, CheckCircle, AlertTriangle, ArrowRight } from "lucide-react";
 
 interface AddonUploadFormProps {
   onUploadSuccess: () => void;
@@ -30,58 +30,11 @@ export default function AddonUploadForm({ onUploadSuccess }: AddonUploadFormProp
 
   // Submission state
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isGeneratingCover, setIsGeneratingCover] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
 
   const coverInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Generate cover with AI Gemini
-  const handleGenerateAICover = async (e: React.MouseEvent) => {
-    e.stopPropagation(); // Avoid triggering file chooser dialog
-    setErrorMsg("");
-    setSuccessMsg("");
-
-    if (!name.trim()) {
-      setErrorMsg("Harap isi Nama Add-on terlebih dahulu agar AI dapat menghasilkan tema gambar yang sesuai.");
-      return;
-    }
-    if (!description.trim()) {
-      setErrorMsg("Harap isi Deskripsi terlebih dahulu agar AI mengerti tema/fungsi add-on Anda.");
-      return;
-    }
-
-    setIsGeneratingCover(true);
-
-    try {
-      const response = await fetch("/api/addons/generate-cover", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name,
-          description,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Gagal menghasilkan gambar cover dengan AI");
-      }
-
-      setCoverBase64(data.coverBase64);
-      setCoverPreview(data.coverBase64);
-      setCoverName(`ai-cover-${Date.now()}.png`);
-      setSuccessMsg("Cover add-on berhasil dibuat dengan AI Gemini!");
-    } catch (err: any) {
-      setErrorMsg(err.message || "Gagal memproses pembuatan gambar cover AI.");
-    } finally {
-      setIsGeneratingCover(false);
-    }
-  };
 
   // Helper to convert File to Base64 Data URL
   const fileToBase64 = (file: File): Promise<string> => {
@@ -271,7 +224,7 @@ export default function AddonUploadForm({ onUploadSuccess }: AddonUploadFormProp
     <div id="addon-upload-container" className="max-w-3xl mx-auto glass-premium card-hover-border border border-slate-800/80 rounded-3xl p-6 md:p-8 shadow-2xl backdrop-blur-md transition-all duration-300">
       <div className="flex items-center gap-3 mb-6">
         <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-          <Sparkles size={20} />
+          <Upload size={20} />
         </div>
         <div>
           <h2 className="text-xl font-display font-bold text-slate-100">Bagikan Add-on Minecraft</h2>
@@ -411,25 +364,6 @@ export default function AddonUploadForm({ onUploadSuccess }: AddonUploadFormProp
                 <span className="text-xs text-emerald-400 font-mono truncate max-w-full px-2">{coverName}</span>
               )}
             </div>
-
-            <button
-              type="button"
-              onClick={handleGenerateAICover}
-              disabled={isGeneratingCover}
-              className="mt-3 inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 active:from-emerald-700 active:to-teal-600 text-slate-950 font-bold py-2.5 px-4 rounded-xl text-xs shadow-lg shadow-emerald-500/5 hover:shadow-emerald-500/15 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98] cursor-pointer w-full"
-            >
-              {isGeneratingCover ? (
-                <>
-                  <span className="w-3.5 h-3.5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin"></span>
-                  Sedang Merancang Gambar AI...
-                </>
-              ) : (
-                <>
-                  <Sparkles size={14} className="text-slate-950" />
-                  Buat Cover Gambar Bertema dengan AI Gemini
-                </>
-              )}
-            </button>
           </div>
 
           {/* Addon File Upload Zone */}
