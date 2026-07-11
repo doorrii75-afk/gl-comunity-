@@ -633,15 +633,46 @@ export default function AddonDetailModal({
                       <div className="h-1 w-1 bg-slate-700 rounded-full" />
                       <div className="flex items-center gap-1.5">
                         {addon.ratingCount && addon.ratingCount > 0 ? (
-                          <div className="flex items-center gap-1 text-amber-400 font-bold">
-                            <Star size={14} className="fill-amber-400 stroke-amber-400" />
-                            <span>{(addon.ratingSum! / addon.ratingCount).toFixed(1)} / 5</span>
-                            <span className="text-slate-500 text-[10px] font-normal">({addon.ratingCount} rating)</span>
+                          <div className="flex items-center gap-1 text-amber-400 font-bold bg-slate-950/40 px-2 py-0.5 rounded-lg border border-slate-800/40">
+                            <motion.div
+                              key={`star-icon-${addon.ratingCount}`}
+                              initial={{ scale: 0.5, rotate: -30 }}
+                              animate={{ scale: 1, rotate: 0 }}
+                              transition={{ type: "spring", stiffness: 400, damping: 12 }}
+                              className="flex items-center"
+                            >
+                              <Star size={13} className="fill-amber-400 stroke-amber-400 animate-pulse" />
+                            </motion.div>
+                            
+                            <motion.span
+                              key={`rating-val-${addon.ratingCount}`}
+                              initial={{ scale: 0.8, filter: "brightness(1.5)" }}
+                              animate={{ scale: 1, filter: "brightness(1)" }}
+                              transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                              className="inline-block font-mono text-xs text-amber-300"
+                            >
+                              {(addon.ratingSum! / addon.ratingCount).toFixed(1)}
+                            </motion.span>
+                            
+                            <span className="text-slate-600 text-xs font-normal">/</span>
+                            <span className="text-slate-500 text-[10px] font-normal">5</span>
+
+                            <span className="text-slate-700 font-normal text-[9px]">•</span>
+
+                            <motion.span
+                              key={`rating-count-${addon.ratingCount}`}
+                              initial={{ y: -8, opacity: 0 }}
+                              animate={{ y: 0, opacity: 1 }}
+                              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                              className="inline-block text-slate-500 text-[10px] font-normal"
+                            >
+                              {addon.ratingCount} {addon.ratingCount === 1 ? 'rating' : 'ratings'}
+                            </motion.span>
                           </div>
                         ) : (
-                          <div className="flex items-center gap-1 text-slate-500">
-                            <Star size={14} />
-                            <span>Belum dinilai</span>
+                          <div className="flex items-center gap-1 text-slate-500 bg-slate-950/40 px-2 py-0.5 rounded-lg border border-slate-900/50">
+                            <Star size={13} />
+                            <span className="text-xs">Belum dinilai</span>
                           </div>
                         )}
                       </div>
@@ -719,40 +750,57 @@ export default function AddonDetailModal({
                           {[1, 2, 3, 4, 5].map((star) => {
                             const isFilled = hoverRating ? star <= hoverRating : star <= userRating;
                             return (
-                              <button
+                              <motion.button
                                 key={star}
                                 type="button"
                                 disabled={isRatingSubmitted || isSubmittingRating}
                                 onClick={() => handleRate(star)}
                                 onMouseEnter={() => !isRatingSubmitted && setHoverRating(star)}
                                 onMouseLeave={() => !isRatingSubmitted && setHoverRating(0)}
-                                className={`p-1 rounded-lg transition-all ${
+                                whileHover={!isRatingSubmitted && !isSubmittingRating ? { scale: 1.25, rotate: 8, y: -2 } : {}}
+                                whileTap={!isRatingSubmitted && !isSubmittingRating ? { scale: 0.85 } : {}}
+                                className={`p-1.5 rounded-xl transition-colors ${
                                   isRatingSubmitted 
                                     ? "cursor-default text-amber-400" 
-                                    : "hover:bg-slate-800/50 hover:scale-110 active:scale-95 cursor-pointer text-slate-400"
+                                    : "hover:bg-emerald-500/10 cursor-pointer text-slate-500 hover:text-emerald-400"
                                 }`}
                                 title={`Nilai ${star} Bintang`}
                               >
                                 <Star
-                                  size={22}
-                                  className={`transition-all ${
+                                  size={24}
+                                  className={`transition-all duration-300 ${
                                     isFilled 
-                                      ? "fill-amber-400 stroke-amber-400" 
-                                      : "stroke-slate-600 hover:stroke-slate-400"
+                                      ? "fill-amber-400 stroke-amber-400 filter drop-shadow-[0_0_4px_rgba(251,191,36,0.5)]" 
+                                      : "stroke-slate-600"
                                   } ${isSubmittingRating ? "animate-pulse" : ""}`}
                                 />
-                              </button>
+                              </motion.button>
                             );
                           })}
                         </div>
-                        <span className="text-[10px] font-mono text-slate-500">
-                          {isRatingSubmitted 
-                            ? `Terima kasih! Anda menilai ${userRating} bintang.` 
-                            : isSubmittingRating 
-                              ? "Mengirim penilaian..." 
-                              : "Klik bintang untuk mengirim"
-                          }
-                        </span>
+                        <AnimatePresence mode="wait">
+                          <motion.span
+                            key={isRatingSubmitted ? "submitted" : isSubmittingRating ? "submitting" : "idle"}
+                            initial={{ opacity: 0, y: 4 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -4 }}
+                            transition={{ duration: 0.15 }}
+                            className={`text-[10px] font-mono font-bold tracking-wide uppercase ${
+                              isRatingSubmitted 
+                                ? "text-emerald-400" 
+                                : isSubmittingRating 
+                                  ? "text-amber-400 animate-pulse" 
+                                  : "text-slate-500"
+                            }`}
+                          >
+                            {isRatingSubmitted 
+                              ? `🎉 Terima kasih! Anda menilai ${userRating} bintang.` 
+                              : isSubmittingRating 
+                                ? "Mengirim penilaian..." 
+                                : "Klik bintang untuk mengirim"
+                            }
+                          </motion.span>
+                        </AnimatePresence>
                       </div>
                     </div>
                   </div>
