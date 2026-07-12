@@ -5,18 +5,28 @@
 
 import React, { useState, useRef } from "react";
 import { motion } from "motion/react";
-import { Upload, FileCode, Image, CheckCircle, AlertTriangle, ArrowRight } from "lucide-react";
+import { Upload, FileCode, Image, CheckCircle, AlertTriangle, ArrowRight, Megaphone, Send } from "lucide-react";
 
 interface AddonUploadFormProps {
   onUploadSuccess: () => void;
 }
 
 export default function AddonUploadForm({ onUploadSuccess }: AddonUploadFormProps) {
+  const [activeFormTab, setActiveFormTab] = useState<"addon" | "broadcast">("addon");
+
+  // Addon upload state
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("Survival");
   const [compatibleVersion, setCompatibleVersion] = useState("1.21.x");
   const [author, setAuthor] = useState("Admin");
+
+  // Broadcast state
+  const [broadcastTitle, setBroadcastTitle] = useState("");
+  const [broadcastMessage, setBroadcastMessage] = useState("");
+  const [broadcastType, setBroadcastType] = useState<"info" | "warning" | "success" | "danger">("info");
+  const [broadcastAuthor, setBroadcastAuthor] = useState("Admin");
+  const [isSendingBroadcast, setIsSendingBroadcast] = useState(false);
 
   // Cover state
   const [coverBase64, setCoverBase64] = useState("");
@@ -220,16 +230,102 @@ export default function AddonUploadForm({ onUploadSuccess }: AddonUploadFormProp
     }
   };
 
+  const handleBroadcastSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg("");
+    setSuccessMsg("");
+
+    if (!broadcastTitle.trim()) {
+      setErrorMsg("Judul notifikasi wajib diisi.");
+      return;
+    }
+    if (!broadcastMessage.trim()) {
+      setErrorMsg("Pesan notifikasi wajib diisi.");
+      return;
+    }
+
+    setIsSendingBroadcast(true);
+
+    try {
+      const response = await fetch("/api/broadcasts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: broadcastTitle,
+          message: broadcastMessage,
+          type: broadcastType,
+          author: broadcastAuthor,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Gagal mengirim broadcast notifikasi ke server.");
+      }
+
+      const data = await response.json();
+      setSuccessMsg(`Notifikasi broadcast "${data.title}" berhasil disebarkan ke semua pengguna secara realtime!`);
+      
+      // Reset broadcast form
+      setBroadcastTitle("");
+      setBroadcastMessage("");
+      setBroadcastType("info");
+    } catch (err: any) {
+      setErrorMsg(err.message || "Gagal mengirim broadcast.");
+    } finally {
+      setIsSendingBroadcast(false);
+    }
+  };
+
   return (
     <div id="addon-upload-container" className="max-w-3xl mx-auto glass-premium card-hover-border border border-slate-800/80 rounded-3xl p-6 md:p-8 shadow-2xl backdrop-blur-md transition-all duration-300">
       <div className="flex items-center gap-3 mb-6">
         <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-          <Upload size={20} />
+          {activeFormTab === "addon" ? <Upload size={20} /> : <Megaphone size={20} />}
         </div>
         <div>
-          <h2 className="text-xl font-display font-bold text-slate-100">Bagikan Add-on Minecraft</h2>
-          <p className="text-xs text-slate-400">Unggah add-on buatanmu sendiri agar bisa diunduh langsung tanpa iklan.</p>
+          <h2 className="text-xl font-display font-bold text-slate-100">
+            {activeFormTab === "addon" ? "Bagikan Add-on Minecraft" : "Kirim Broadcast Notifikasi"}
+          </h2>
+          <p className="text-xs text-slate-400">
+            {activeFormTab === "addon" 
+              ? "Unggah add-on buatanmu sendiri agar bisa diunduh langsung tanpa iklan." 
+              : "Kirim pesan pengumuman realtime ke seluruh pengunjung website."}
+          </p>
         </div>
+      </div>
+
+      {/* Form Tab Selector */}
+      <div className="flex border-b border-slate-900 mb-6 gap-2">
+        <button
+          type="button"
+          onClick={() => { setActiveFormTab("addon"); setErrorMsg(""); setSuccessMsg(""); }}
+          className={`pb-3 text-xs font-bold tracking-wider uppercase border-b-2 px-4 transition-all cursor-pointer ${
+            activeFormTab === "addon"
+              ? "border-emerald-500 text-emerald-400 font-bold"
+              : "border-transparent text-slate-500 hover:text-slate-300"
+          }`}
+        >
+          <span className="flex items-center gap-1.5">
+            <Upload size={14} />
+            Unggah Add-on
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={() => { setActiveFormTab("broadcast"); setErrorMsg(""); setSuccessMsg(""); }}
+          className={`pb-3 text-xs font-bold tracking-wider uppercase border-b-2 px-4 transition-all cursor-pointer ${
+            activeFormTab === "broadcast"
+              ? "border-emerald-500 text-emerald-400 font-bold"
+              : "border-transparent text-slate-500 hover:text-slate-300"
+          }`}
+        >
+          <span className="flex items-center gap-1.5">
+            <Megaphone size={14} />
+            Kirim Broadcast
+          </span>
+        </button>
       </div>
 
       {successMsg && (
@@ -254,7 +350,81 @@ export default function AddonUploadForm({ onUploadSuccess }: AddonUploadFormProp
         </motion.div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      {activeFormTab === "broadcast" ? (
+        <form onSubmit={handleBroadcastSubmit} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Judul Notifikasi <span className="text-rose-400">*</span></label>
+              <input
+                type="text"
+                placeholder="Contoh: Pemeliharaan Server Selesai!"
+                value={broadcastTitle}
+                onChange={(e) => setBroadcastTitle(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Pengirim / Author</label>
+              <input
+                type="text"
+                placeholder="Contoh: Admin"
+                value={broadcastAuthor}
+                onChange={(e) => setBroadcastAuthor(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Tipe Notifikasi / Warna Aksen</label>
+              <select
+                value={broadcastType}
+                onChange={(e) => setBroadcastType(e.target.value as any)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 transition-all"
+              >
+                <option value="info">Info (Default / Slate)</option>
+                <option value="success">Sukses (Hijau)</option>
+                <option value="warning">Penting (Kuning)</option>
+                <option value="danger">Darurat (Merah)</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Isi Pesan Notifikasi <span className="text-rose-400">*</span></label>
+            <textarea
+              rows={4}
+              placeholder="Masukkan isi pesan pengumuman Anda yang akan langsung muncul sebagai toast pemberitahuan di browser setiap pengguna yang sedang membuka web..."
+              value={broadcastMessage}
+              onChange={(e) => setBroadcastMessage(e.target.value)}
+              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all resize-none"
+              required
+            />
+          </div>
+
+          {/* Submit button */}
+          <div className="pt-4 border-t border-slate-800/60 flex items-center justify-end">
+            <button
+              type="submit"
+              disabled={isSendingBroadcast}
+              className="w-full md:w-auto inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 disabled:opacity-50 text-slate-950 font-bold px-8 py-3.5 rounded-xl shadow-lg shadow-emerald-500/10 active:scale-95 transition-all cursor-pointer"
+            >
+              {isSendingBroadcast ? (
+                <>Mengirim Broadcast...</>
+              ) : (
+                <>
+                  Kirim Notifikasi Realtime
+                  <Send size={14} />
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-6">
         {/* Row 1: Name and Author */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div>
@@ -418,6 +588,7 @@ export default function AddonUploadForm({ onUploadSuccess }: AddonUploadFormProp
           </button>
         </div>
       </form>
+      )}
     </div>
   );
 }

@@ -13,6 +13,7 @@ import AddonCard from "./components/AddonCard";
 import AddonDetailModal from "./components/AddonDetailModal";
 import AddonUploadForm from "./components/AddonUploadForm";
 import ModrinthExplore from "./components/ModrinthExplore";
+import MCPEDLExplore from "./components/MCPEDLExplore";
 import heavencraftLogo from "./assets/images/heavencraft_logo_1783776928325.jpg";
 
 const WhatsAppIcon = ({ size = 16, className = "" }: { size?: number; className?: string }) => (
@@ -33,8 +34,8 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   
-  // Navigation: "beranda" | "kategori" | "cari" | "tambah" | "modrinth"
-  const [activeTab, setActiveTab] = useState<"beranda" | "kategori" | "cari" | "tambah" | "modrinth">("beranda");
+  // Navigation: "beranda" | "kategori" | "cari" | "tambah" | "modrinth" | "mcpedl"
+  const [activeTab, setActiveTab] = useState<"beranda" | "kategori" | "cari" | "tambah" | "modrinth" | "mcpedl">("beranda");
   
   // Premium Interactive Mouse Light Tracking
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
@@ -318,15 +319,88 @@ export default function App() {
     }
   };
 
+  const fetchBroadcasts = async () => {
+    try {
+      const response = await fetch("/api/broadcasts");
+      if (response.ok) {
+        const data = await response.json();
+        if (Array.isArray(data) && data.length > 0) {
+          const processedRaw = localStorage.getItem("heavencraft_processed_broadcasts") || "[]";
+          let processedIds: string[] = [];
+          try {
+            processedIds = JSON.parse(processedRaw);
+          } catch {
+            processedIds = [];
+          }
+
+          let hasNew = false;
+          const newProcessed = [...processedIds];
+
+          data.forEach((b: any) => {
+            if (!processedIds.includes(b.id)) {
+              hasNew = true;
+              newProcessed.push(b.id);
+
+              playNotificationSound();
+
+              const notifId = `broadcast-${b.id}`;
+              const newNotif = {
+                id: notifId,
+                addonId: null,
+                title: b.title,
+                message: b.message,
+                category: b.type === "danger" ? "Darurat" : b.type === "warning" ? "Penting" : b.type === "success" ? "Sukses" : "Informasi",
+                createdAt: b.createdAt || new Date().toISOString(),
+                read: false,
+                isBroadcast: true
+              };
+
+              setNotifications((prev: any[]) => {
+                const filtered = prev.filter(n => n.id !== notifId);
+                const updated = [newNotif, ...filtered];
+                localStorage.setItem("heavencraft_notifications", JSON.stringify(updated));
+                return updated;
+              });
+
+              const toastId = `toast-broadcast-${b.id}`;
+              setActiveToasts((prev: any[]) => {
+                const filtered = prev.filter(t => t.id !== toastId);
+                return [...filtered, {
+                  id: toastId,
+                  title: b.title,
+                  message: b.message,
+                  isBroadcast: true,
+                  type: b.type
+                }];
+              });
+
+              setTimeout(() => {
+                setActiveToasts((prev: any[]) => prev.filter(t => t.id !== toastId));
+              }, 7000);
+            }
+          });
+
+          if (hasNew) {
+            localStorage.setItem("heavencraft_processed_broadcasts", JSON.stringify(newProcessed));
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("Gagal mengambil update broadcast:", err);
+    }
+  };
+
   useEffect(() => {
     fetchAddons();
     fetchDbStatus();
+    fetchBroadcasts();
 
-    // Setup active real-time polling every 20 seconds to sync downloads, comments, and new uploads instantly
+    // Setup active real-time polling every 10 seconds for instant broadcast notification delivery
     const interval = setInterval(() => {
       fetchAddons(true);
       fetchDbStatus();
-    }, 20000);
+      fetchBroadcasts();
+    }, 10000);
 
     return () => clearInterval(interval);
   }, []);
@@ -828,6 +902,9 @@ export default function App() {
                               <div className="flex-1 min-w-0 space-y-1">
                                 <div className="flex items-center justify-between gap-2">
                                   <span className={`text-[10px] font-mono uppercase font-bold tracking-wide ${
+                                    notif.category === "Darurat" ? "text-rose-400 font-black" :
+                                    notif.category === "Penting" ? "text-amber-400 font-bold" :
+                                    notif.category === "Sukses" ? "text-emerald-400 font-bold" :
                                     notif.isSimulation ? "text-amber-400" : "text-emerald-500"
                                   }`}>
                                     {notif.category || "Addon baru"}
@@ -915,18 +992,29 @@ export default function App() {
               exit={{ opacity: 0, x: 50, scale: 0.9 }}
               className="pointer-events-auto bg-slate-950/95 border border-slate-800/80 rounded-2xl p-4 shadow-2xl backdrop-blur-xl flex gap-3 relative overflow-hidden text-left"
             >
-              {/* Green glowing accent strip */}
+              {/* Glowing accent strip */}
               <div className={`absolute left-0 top-0 bottom-0 w-1 ${
+                toast.isBroadcast && toast.type === "danger" ? "bg-rose-500 animate-pulse" :
+                toast.isBroadcast && toast.type === "warning" ? "bg-amber-400 animate-pulse" :
+                toast.isBroadcast && toast.type === "success" ? "bg-emerald-500 animate-pulse" :
+                toast.isBroadcast ? "bg-cyan-500 animate-pulse" :
                 toast.isSimulation ? "bg-amber-400" : "bg-emerald-500 animate-pulse"
               }`} />
               
-              <div className="p-2 bg-slate-900 border border-slate-800 rounded-xl text-emerald-400 shrink-0 self-start">
+              <div className={`p-2 border rounded-xl shrink-0 self-start ${
+                toast.isBroadcast && toast.type === "danger" ? "bg-rose-950/40 border-rose-500/30 text-rose-400" :
+                toast.isBroadcast && toast.type === "warning" ? "bg-amber-950/40 border-amber-500/30 text-amber-400" :
+                toast.isBroadcast && toast.type === "success" ? "bg-emerald-950/40 border-emerald-500/30 text-emerald-400" :
+                toast.isBroadcast ? "bg-cyan-950/40 border-cyan-500/30 text-cyan-400" :
+                "bg-slate-900 border-slate-800 text-emerald-400"
+              }`}>
                 <Bell size={18} className="animate-bounce" />
               </div>
               
               <div className="flex-1 space-y-1">
                 <h4 className="text-xs font-mono font-bold tracking-wide uppercase text-slate-500">
-                  {toast.isSimulation ? "🔔 Simulasi Notifikasi" : "🎉 Rilisan Baru!"}
+                  {toast.isBroadcast ? "📢 Broadcast Pengumuman" :
+                   toast.isSimulation ? "🔔 Simulasi Notifikasi" : "🎉 Rilisan Baru!"}
                 </h4>
                 <p className="text-xs font-bold text-slate-100 leading-snug">
                   {toast.title}
@@ -1378,13 +1466,26 @@ export default function App() {
               </motion.div>
             )}
 
+            {/* TAB 6: MCPEDL (EXPLORE PORTAL) */}
+            {activeTab === "mcpedl" && (
+              <motion.div
+                key="tab-mcpedl"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                transition={{ duration: 0.25 }}
+              >
+                <MCPEDLExplore />
+              </motion.div>
+            )}
+
 
           </AnimatePresence>
         )}
       </main>
 
       {/* Floating Bottom Menu Glassmorphism Navigation Dock (Mobile-First / Super Modern) */}
-      <nav id="floating-bottom-nav" className="fixed bottom-4 left-1/2 -translate-x-1/2 z-45 w-[94%] max-w-lg bg-slate-950/40 backdrop-blur-2xl border border-white/10 rounded-3xl px-3 py-2.5 shadow-[0_12px_40px_rgba(0,0,0,0.8)] shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]">
+      <nav id="floating-bottom-nav" className="fixed bottom-4 left-1/2 -translate-x-1/2 z-45 w-[94%] max-w-xl bg-slate-950/40 backdrop-blur-2xl border border-white/10 rounded-3xl px-3 py-2.5 shadow-[0_12px_40px_rgba(0,0,0,0.8)] shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]">
         <div className="flex items-center justify-between relative gap-1">
           
           {/* Menu Button: Beranda */}
@@ -1460,7 +1561,26 @@ export default function App() {
               />
             )}
             <Globe size={18} className={activeTab === "modrinth" ? "scale-110 text-emerald-400" : ""} />
-            <span className="text-[9px] sm:text-[10px] tracking-wide uppercase font-semibold whitespace-nowrap">Online</span>
+            <span className="text-[9px] sm:text-[10px] tracking-wide uppercase font-semibold whitespace-nowrap">Modrinth</span>
+          </button>
+
+          {/* Menu Button: MCPEDL */}
+          <button
+            id="nav-btn-mcpedl"
+            onClick={() => setActiveTab("mcpedl")}
+            className={`relative flex-1 flex flex-col items-center gap-1 py-1.5 px-2 rounded-xl transition-all cursor-pointer ${
+              activeTab === "mcpedl" ? "text-emerald-400 font-bold" : "text-slate-500 hover:text-slate-300"
+            }`}
+          >
+            {activeTab === "mcpedl" && (
+              <motion.span
+                layoutId="nav-glow-bubble"
+                className="absolute inset-0 bg-emerald-500/10 border border-emerald-500/20 rounded-xl -z-10"
+                transition={{ type: "spring", stiffness: 350, damping: 25 }}
+              />
+            )}
+            <Compass size={18} className={activeTab === "mcpedl" ? "scale-110 text-emerald-400" : ""} />
+            <span className="text-[9px] sm:text-[10px] tracking-wide uppercase font-semibold whitespace-nowrap">MCPEDL</span>
           </button>
 
           {/* Menu Button: Tambah */}
