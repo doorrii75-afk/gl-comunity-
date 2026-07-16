@@ -1086,7 +1086,7 @@ export default function App() {
         {loading && addons.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-32 gap-4">
             <div className="w-12 h-12 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin" />
-            <span className="text-sm font-mono text-slate-400">Menghubungkan ke Heaven Craft Database...</span>
+            <span className="text-sm font-mono text-slate-400">Loading...</span>
           </div>
         ) : error && addons.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center max-w-md mx-auto">

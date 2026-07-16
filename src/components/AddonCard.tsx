@@ -7,6 +7,7 @@ import React from "react";
 import { motion } from "motion/react";
 import { Download, MessageSquare, Tag, Eye, Star } from "lucide-react";
 import { Addon } from "../types";
+import { use3DTilt } from "../hooks/use3DTilt";
 
 interface AddonCardProps {
   key?: React.Key;
@@ -16,21 +17,65 @@ interface AddonCardProps {
 }
 
 export default function AddonCard({ addon, onOpenDetails, onDownload }: AddonCardProps) {
+  const {
+    ref,
+    tilt,
+    glare,
+    isHovered,
+    handleMouseMove,
+    handleMouseEnter,
+    handleMouseLeave,
+    maxGlare,
+  } = use3DTilt(10, 0.15);
+
   return (
     <motion.div
+      ref={ref}
       id={`addon-card-${addon.id}`}
       layout
       initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
+      animate={{
+        opacity: 1,
+        y: 0,
+        rotateX: isHovered ? tilt.x : 0,
+        rotateY: isHovered ? tilt.y : 0,
+        scale: isHovered ? 1.025 : 1,
+        boxShadow: isHovered
+          ? "0 30px 60px -15px rgba(16, 185, 129, 0.25), 0 0 50px 0px rgba(16, 185, 129, 0.15)"
+          : "0 10px 25px -5px rgba(0, 0, 0, 0.4)",
+      }}
       exit={{ opacity: 0, scale: 0.95 }}
-      whileHover={{ y: -6 }}
-      transition={{ type: "spring", stiffness: 300, damping: 25 }}
-      className="glass-premium card-hover-border glaze-reflection glow-emerald hover:glow-emerald-active rounded-2xl overflow-hidden shadow-xl hover:border-emerald-500/40 group flex flex-col h-full transition-all duration-300"
+      onMouseMove={handleMouseMove}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      transition={{
+        type: "spring",
+        stiffness: 180,
+        damping: 18,
+        mass: 0.6,
+        layout: { type: "spring", stiffness: 300, damping: 25 }
+      }}
+      style={{
+        transformStyle: "preserve-3d",
+        perspective: 1000,
+      }}
+      className="glass-premium card-hover-border rounded-2xl overflow-hidden hover:border-emerald-500/40 group flex flex-col h-full transition-colors duration-300 relative"
     >
+      {/* Dynamic 3D Glare Reflection Overlay */}
+      <div
+        className="pointer-events-none absolute inset-0 z-30 transition-opacity duration-300"
+        style={{
+          background: `radial-gradient(circle at ${glare.x}% ${glare.y}%, rgba(255, 255, 255, ${maxGlare}) 0%, transparent 65%)`,
+          opacity: isHovered ? 1 : 0,
+          mixBlendMode: "overlay",
+        }}
+      />
+
       {/* Cover Image Container */}
       <div 
         id={`card-cover-container-${addon.id}`}
         onClick={() => onOpenDetails(addon)}
+        style={{ transform: "translateZ(25px)" }}
         className="aspect-video w-full relative overflow-hidden bg-slate-950 cursor-pointer group"
       >
         <img

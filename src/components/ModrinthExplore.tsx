@@ -73,6 +73,124 @@ const SORT_OPTIONS = [
   { id: "follows", label: "Banyak Diikuti" }
 ];
 
+import { use3DTilt } from "../hooks/use3DTilt";
+
+interface ModrinthCardProps {
+  key?: React.Key;
+  project: ModrinthProject;
+  idx: number;
+  onSelect: (project: ModrinthProject) => void;
+  formatDownloads: (num: number) => string;
+}
+
+function ModrinthCard({ project, idx, onSelect, formatDownloads }: ModrinthCardProps) {
+  const {
+    ref,
+    tilt,
+    glare,
+    isHovered,
+    handleMouseMove,
+    handleMouseEnter,
+    handleMouseLeave,
+    maxGlare,
+  } = use3DTilt(10, 0.12);
+
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 15 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{
+        type: "spring",
+        stiffness: 180,
+        damping: 18,
+        mass: 0.6,
+        delay: Math.min(idx * 0.03, 0.3),
+      }}
+      animate={{
+        rotateX: isHovered ? tilt.x : 0,
+        rotateY: isHovered ? tilt.y : 0,
+        scale: isHovered ? 1.025 : 1,
+        boxShadow: isHovered
+          ? "0 35px 65px -15px rgba(16, 185, 129, 0.2), 0 0 50px 0px rgba(16, 185, 129, 0.1)"
+          : "0 10px 25px -5px rgba(0, 0, 0, 0.4)",
+      }}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      style={{
+        transformStyle: "preserve-3d",
+        perspective: 1000,
+      }}
+      className="bg-slate-950 border border-slate-900/80 hover:border-emerald-500/30 rounded-2xl p-5 flex flex-col justify-between gap-5 group/card transition-colors duration-300 relative overflow-hidden h-full"
+    >
+      {/* Dynamic 3D Glare Reflection Overlay */}
+      <div
+        className="pointer-events-none absolute inset-0 z-30 transition-opacity duration-300"
+        style={{
+          background: `radial-gradient(circle at ${glare.x}% ${glare.y}%, rgba(255, 255, 255, ${maxGlare}) 0%, transparent 65%)`,
+          opacity: isHovered ? 1 : 0,
+          mixBlendMode: "overlay",
+        }}
+      />
+
+      <div className="space-y-3.5" style={{ transform: "translateZ(15px)" }}>
+        {/* Card Header Info */}
+        <div className="flex gap-3">
+          {/* Project Icon */}
+          <div className="w-12 h-12 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0 overflow-hidden relative shadow">
+            {project.icon_url ? (
+              <img
+                src={project.icon_url}
+                alt={project.title}
+                referrerPolicy="no-referrer"
+                className="w-full h-full object-cover group-hover/card:scale-110 transition-transform duration-350"
+                loading="lazy"
+              />
+            ) : (
+              <Sparkles size={18} className="text-emerald-500/30" />
+            )}
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 mb-1">
+              <span className="bg-slate-900 text-slate-400 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border border-slate-800/80 uppercase tracking-wider whitespace-nowrap">
+                {project.project_type}
+              </span>
+            </div>
+            <h3 className="text-sm font-bold text-slate-100 truncate group-hover/card:text-emerald-400 transition-colors" title={project.title}>
+              {project.title}
+            </h3>
+            <p className="text-[10px] text-slate-500 truncate">Oleh <span className="text-slate-400 font-semibold">{project.author}</span></p>
+          </div>
+        </div>
+
+        {/* Short description */}
+        <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+          {project.description}
+        </p>
+      </div>
+
+      {/* Bottom stats and action button */}
+      <div className="flex items-center justify-between pt-3.5 border-t border-slate-900/60" style={{ transform: "translateZ(10px)" }}>
+        <div className="flex items-center gap-1.5 font-mono text-[10px] text-slate-400">
+          <Download size={12} className="text-emerald-500" />
+          <span className="font-semibold">{formatDownloads(project.downloads)} Unduhan</span>
+        </div>
+
+        <button
+          onClick={() => onSelect(project)}
+          className="bg-slate-900 hover:bg-emerald-500 border border-slate-800/80 hover:border-emerald-500 text-slate-300 hover:text-slate-950 text-[11px] font-bold px-3.5 py-1.5 rounded-xl flex items-center gap-1 transition-all cursor-pointer shadow-sm active:scale-95"
+        >
+          <Eye size={12} />
+          <span>Detail</span>
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
 export default function ModrinthExplore() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedProjectType, setSelectedProjectType] = useState("all");
@@ -419,7 +537,7 @@ export default function ModrinthExplore() {
             <div className="w-16 h-16 rounded-full border-4 border-emerald-500/10 border-t-emerald-500 animate-spin" />
             <Globe size={24} className="absolute text-emerald-400 animate-pulse" />
           </div>
-          <span className="text-xs font-mono text-slate-400 tracking-widest uppercase">MENGHUBUNGKAN MODRINTH CLOUD...</span>
+          <span className="text-xs font-mono text-slate-400 tracking-widest uppercase">Loading...</span>
         </div>
       ) : error ? (
         <div className="flex flex-col items-center justify-center py-20 text-center max-w-md mx-auto bg-slate-950 border border-slate-900 rounded-3xl p-8">
@@ -443,67 +561,13 @@ export default function ModrinthExplore() {
         <div className="space-y-10">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {projects.map((project, idx) => (
-              <motion.div
+              <ModrinthCard
                 key={project.project_id + "-" + idx}
-                initial={{ opacity: 0, y: 15 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.2, delay: Math.min(idx * 0.03, 0.3) }}
-                className="bg-slate-950 border border-slate-900/80 hover:border-emerald-500/30 rounded-2xl p-5 flex flex-col justify-between gap-5 group/card hover:shadow-2xl hover:shadow-emerald-500/5 transition-all duration-300 relative overflow-hidden"
-              >
-                <div className="space-y-3.5">
-                  {/* Card Header Info */}
-                  <div className="flex gap-3">
-                    {/* Project Icon */}
-                    <div className="w-12 h-12 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0 overflow-hidden relative shadow">
-                      {project.icon_url ? (
-                        <img
-                          src={project.icon_url}
-                          alt={project.title}
-                          referrerPolicy="no-referrer"
-                          className="w-full h-full object-cover group-hover/card:scale-110 transition-transform duration-350"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <Sparkles size={18} className="text-emerald-500/30" />
-                      )}
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5 mb-1">
-                        <span className="bg-slate-900 text-slate-400 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border border-slate-800/80 uppercase tracking-wider whitespace-nowrap">
-                          {project.project_type}
-                        </span>
-                      </div>
-                      <h3 className="text-sm font-bold text-slate-100 truncate group-hover/card:text-emerald-400 transition-colors" title={project.title}>
-                        {project.title}
-                      </h3>
-                      <p className="text-[10px] text-slate-500 truncate">Oleh <span className="text-slate-400 font-semibold">{project.author}</span></p>
-                    </div>
-                  </div>
-
-                  {/* Short description */}
-                  <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
-                    {project.description}
-                  </p>
-                </div>
-
-                {/* Bottom stats and action button */}
-                <div className="flex items-center justify-between pt-3.5 border-t border-slate-900/60">
-                  <div className="flex items-center gap-1.5 font-mono text-[10px] text-slate-400">
-                    <Download size={12} className="text-emerald-500" />
-                    <span className="font-semibold">{formatDownloads(project.downloads)} Unduhan</span>
-                  </div>
-
-                  <button
-                    onClick={() => handleSelectProject(project)}
-                    className="bg-slate-900 hover:bg-emerald-500 border border-slate-800/80 hover:border-emerald-500 text-slate-300 hover:text-slate-950 text-[11px] font-bold px-3.5 py-1.5 rounded-xl flex items-center gap-1 transition-all cursor-pointer shadow-sm active:scale-95"
-                  >
-                    <Eye size={12} />
-                    <span>Detail</span>
-                  </button>
-                </div>
-              </motion.div>
+                project={project}
+                idx={idx}
+                onSelect={handleSelectProject}
+                formatDownloads={formatDownloads}
+              />
             ))}
           </div>
 
@@ -513,7 +577,7 @@ export default function ModrinthExplore() {
               <div className="flex items-center gap-2 bg-slate-950 border border-slate-900/60 rounded-2xl px-6 py-3.5 shadow-xl">
                 <Loader2 size={16} className="animate-spin text-emerald-400" />
                 <span className="text-xs font-semibold text-slate-300 font-mono tracking-wide">
-                  Memuat add-on online lainnya...
+                  Loading...
                 </span>
               </div>
             )}
