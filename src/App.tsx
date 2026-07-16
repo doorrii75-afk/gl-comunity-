@@ -1113,67 +1113,146 @@ export default function App() {
                 transition={{ duration: 0.25 }}
                 className="space-y-10"
               >
-                {/* 1. Featured Auto-Slider */}
-                <section id="slider-section">
-                  <AddonSlider
-                    addons={addons}
-                    onOpenDetails={setSelectedAddon}
-                    onDownload={handleDownload}
-                  />
-                </section>
-
-                {/* 2. Quick Category Circle Selection */}
-                <section id="quick-category-section" className="py-2">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest font-mono flex items-center gap-2">
-                      <Compass size={16} className="text-emerald-500" />
-                      Jelajahi Kategori
-                    </h3>
+                {/* 3D Modern Search Section */}
+                <section id="homepage-search-section" className="space-y-4">
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-500 group-focus-within:text-emerald-400 transition-colors">
+                      <Search size={20} />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Cari add-on Minecraft (nama, deskripsi, versi, atau kategori)..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full bg-slate-950/65 hover:bg-slate-900 border border-slate-900 rounded-2xl pl-12 pr-4 py-4 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition-all text-sm md:text-base shadow-xl backdrop-blur-md"
+                    />
                   </div>
-                  <div className="flex items-center gap-3 overflow-x-auto pb-4 pt-1 no-scrollbar -mx-4 px-4 md:mx-0 md:px-0">
-                    {categories.slice(1).map((cat) => (
+
+                  {/* Popular Keywords Chips */}
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <span className="text-xs font-bold font-mono text-slate-500 uppercase tracking-wider">Populer:</span>
+                    {popularTags.map((tag) => (
                       <button
-                        key={cat}
-                        id={`quick-cat-btn-${cat}`}
-                        onClick={() => handleCategorySelect(cat)}
-                        className="shrink-0 bg-slate-900 hover:bg-slate-800 border border-slate-800/80 hover:border-emerald-500/30 text-slate-300 hover:text-emerald-400 rounded-2xl px-5 py-3.5 flex flex-col items-center gap-2 text-center transition-all hover:shadow-lg hover:shadow-emerald-500/5 group/cat cursor-pointer"
+                        key={tag}
+                        id={`home-tag-chip-${tag}`}
+                        onClick={() => handleTagSearch(tag)}
+                        className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-all border cursor-pointer ${
+                          searchQuery.toLowerCase() === tag.toLowerCase()
+                            ? "bg-emerald-500/10 border-emerald-500 text-emerald-400 font-semibold"
+                            : "bg-slate-900/50 hover:bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200"
+                        }`}
                       >
-                        <div className="w-10 h-10 rounded-xl bg-slate-950 border border-slate-800/50 flex items-center justify-center group-hover/cat:scale-110 group-hover/cat:bg-emerald-500/10 group-hover/cat:text-emerald-400 transition-all text-slate-400">
-                          <Gamepad2 size={18} />
-                        </div>
-                        <span className="text-xs font-semibold tracking-wide">{cat}</span>
+                        #{tag}
                       </button>
                     ))}
+                    {searchQuery && (
+                      <button
+                        onClick={() => setSearchQuery("")}
+                        className="text-xs font-mono text-rose-400 hover:text-rose-300 ml-2"
+                      >
+                        Clear
+                      </button>
+                    )}
                   </div>
                 </section>
 
-                {/* 3. Latest Addons Grid */}
-                <section id="latest-addons-section" className="space-y-5">
-                  <div className="flex items-center justify-between border-b border-slate-900 pb-3">
-                    <h3 className="text-lg font-display font-bold text-slate-100 flex items-center gap-2">
-                      <Sparkles size={18} className="text-emerald-400" />
-                      Rilisan Add-on Terbaru
-                    </h3>
-                    <button
-                      onClick={() => handleCategorySelect("Semua")}
-                      className="text-xs font-mono text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition-colors cursor-pointer"
-                    >
-                      Lihat Semua
-                      <ChevronRight size={14} />
-                    </button>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {latestAddons.map((addon) => (
-                      <AddonCard
-                        key={addon.id}
-                        addon={addon}
+                {!searchQuery ? (
+                  <>
+                    {/* 1. Featured Auto-Slider */}
+                    <section id="slider-section">
+                      <AddonSlider
+                        addons={addons}
                         onOpenDetails={setSelectedAddon}
                         onDownload={handleDownload}
                       />
-                    ))}
-                  </div>
-                </section>
+                    </section>
+
+                    {/* 2. Quick Category Circle Selection */}
+                    <section id="quick-category-section" className="py-2">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest font-mono flex items-center gap-2">
+                          <Compass size={16} className="text-emerald-500" />
+                          Jelajahi Kategori
+                        </h3>
+                      </div>
+                      <div className="flex items-center gap-3 overflow-x-auto pb-4 pt-1 no-scrollbar -mx-4 px-4 md:mx-0 md:px-0">
+                        {categories.slice(1).map((cat) => (
+                          <button
+                            key={cat}
+                            id={`quick-cat-btn-${cat}`}
+                            onClick={() => handleCategorySelect(cat)}
+                            className="shrink-0 bg-slate-900 hover:bg-slate-800 border border-slate-800/80 hover:border-emerald-500/30 text-slate-300 hover:text-emerald-400 rounded-2xl px-5 py-3.5 flex flex-col items-center gap-2 text-center transition-all hover:shadow-lg hover:shadow-emerald-500/5 group/cat cursor-pointer"
+                          >
+                            <div className="w-10 h-10 rounded-xl bg-slate-950 border border-slate-800/50 flex items-center justify-center group-hover/cat:scale-110 group-hover/cat:bg-emerald-500/10 group-hover/cat:text-emerald-400 transition-all text-slate-400">
+                              <Gamepad2 size={18} />
+                            </div>
+                            <span className="text-xs font-semibold tracking-wide">{cat}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </section>
+
+                    {/* 3. Latest Addons Grid */}
+                    <section id="latest-addons-section" className="space-y-5">
+                      <div className="flex items-center justify-between border-b border-slate-900 pb-3">
+                        <h3 className="text-lg font-display font-bold text-slate-100 flex items-center gap-2">
+                          <Sparkles size={18} className="text-emerald-400" />
+                          Rilisan Add-on Terbaru
+                        </h3>
+                        <button
+                          onClick={() => handleCategorySelect("Semua")}
+                          className="text-xs font-mono text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition-colors cursor-pointer"
+                        >
+                          Lihat Semua
+                          <ChevronRight size={14} />
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {latestAddons.map((addon) => (
+                          <AddonCard
+                            key={addon.id}
+                            addon={addon}
+                            onOpenDetails={setSelectedAddon}
+                            onDownload={handleDownload}
+                          />
+                        ))}
+                      </div>
+                    </section>
+                  </>
+                ) : (
+                  /* Live Search Results view directly on home page */
+                  <section id="latest-addons-section" className="space-y-5 pt-2">
+                    <div className="flex items-center justify-between border-b border-slate-900 pb-3">
+                      <h3 className="text-lg font-display font-bold text-slate-100 flex items-center gap-2">
+                        <Search size={18} className="text-emerald-400 animate-pulse" />
+                        Hasil Pencarian
+                      </h3>
+                      <span className="text-xs font-mono text-slate-500">
+                        Menemukan <span className="text-emerald-400 font-bold">{filteredSearchAddons.length}</span> add-on yang cocok
+                      </span>
+                    </div>
+
+                    {filteredSearchAddons.length === 0 ? (
+                      <div className="text-center py-20 border border-dashed border-slate-800/60 rounded-3xl max-w-md mx-auto">
+                        <Search size={36} className="text-slate-600 mx-auto mb-3 animate-bounce" />
+                        <h4 className="text-sm font-bold text-slate-300">Hasil Tidak Ditemukan</h4>
+                        <p className="text-xs text-slate-500 mt-1">Kami tidak menemukan hasil untuk "{searchQuery}". Coba kata kunci lainnya.</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {filteredSearchAddons.map((addon) => (
+                          <AddonCard
+                            key={addon.id}
+                            addon={addon}
+                            onOpenDetails={setSelectedAddon}
+                            onDownload={handleDownload}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </section>
+                )}
               </motion.div>
             )}
 
@@ -1250,100 +1329,7 @@ export default function App() {
               </motion.div>
             )}
 
-            {/* TAB 3: CARI */}
-            {activeTab === "cari" && (
-              <motion.div
-                key="tab-cari"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -15 }}
-                transition={{ duration: 0.25 }}
-                className="space-y-8"
-              >
-                {/* Header title */}
-                <div>
-                  <h2 className="text-2xl font-display font-black text-slate-100 tracking-tight flex items-center gap-2">
-                    <Search size={22} className="text-emerald-500" />
-                    Pencarian Mudah
-                  </h2>
-                  <p className="text-xs text-slate-400 mt-1">Cari nama, deskripsi, versi, atau kategori add-on secara instan.</p>
-                </div>
 
-                {/* Big Search Input Panel */}
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-500 group-focus-within:text-emerald-400 transition-colors">
-                    <Search size={20} />
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Masukkan nama add-on, keyword atau kategori..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-800 rounded-2xl pl-12 pr-4 py-4 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition-all text-sm md:text-base shadow-xl"
-                    autoFocus
-                  />
-                </div>
-
-                {/* Popular Keywords Chips */}
-                <div className="flex flex-wrap items-center gap-2.5">
-                  <span className="text-xs font-bold font-mono text-slate-500 uppercase tracking-wider">Populer:</span>
-                  {popularTags.map((tag) => (
-                    <button
-                      key={tag}
-                      id={`tag-chip-${tag}`}
-                      onClick={() => handleTagSearch(tag)}
-                      className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-all border cursor-pointer ${
-                        searchQuery.toLowerCase() === tag.toLowerCase()
-                          ? "bg-emerald-500/10 border-emerald-500 text-emerald-400"
-                          : "bg-slate-900/50 hover:bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200"
-                      }`}
-                    >
-                      #{tag}
-                    </button>
-                  ))}
-                  {searchQuery && (
-                    <button
-                      onClick={() => setSearchQuery("")}
-                      className="text-xs font-mono text-rose-400 hover:text-rose-300 ml-2"
-                    >
-                      Clear
-                    </button>
-                  )}
-                </div>
-
-                {/* Search Results Grid */}
-                <div className="space-y-4 pt-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-mono text-slate-500">
-                      {searchQuery ? (
-                        <>Menemukan <span className="text-emerald-400 font-bold">{filteredSearchAddons.length}</span> add-on cocok</>
-                      ) : (
-                        <>Ketik sesuatu di atas untuk mulai mencari dari total {addons.length} add-on</>
-                      )}
-                    </span>
-                  </div>
-
-                  {searchQuery && filteredSearchAddons.length === 0 ? (
-                    <div className="text-center py-20 border border-dashed border-slate-800 rounded-3xl max-w-md mx-auto">
-                      <Search size={36} className="text-slate-600 mx-auto mb-3" />
-                      <h4 className="text-sm font-bold text-slate-300">Hasil Tidak Ditemukan</h4>
-                      <p className="text-xs text-slate-500 mt-1">Kami tidak menemukan hasil untuk "{searchQuery}". Coba kata kunci lainnya.</p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {(searchQuery ? filteredSearchAddons : addons).map((addon) => (
-                        <AddonCard
-                          key={addon.id}
-                          addon={addon}
-                          onOpenDetails={setSelectedAddon}
-                          onDownload={handleDownload}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            )}
 
             {/* TAB 4: TAMBAH (ADMIN UPLOAD) */}
             {activeTab === "tambah" && (
@@ -1502,25 +1488,6 @@ export default function App() {
             )}
             <FolderHeart size={18} className={activeTab === "kategori" ? "scale-110 text-emerald-400" : ""} />
             <span className="responsive-nav-text uppercase font-semibold whitespace-nowrap">Kategori</span>
-          </button>
-
-          {/* Menu Button: Cari */}
-          <button
-            id="nav-btn-cari"
-            onClick={() => setActiveTab("cari")}
-            className={`relative flex-1 flex flex-col items-center gap-1 py-1.5 px-0.5 sm:px-2 rounded-xl transition-all cursor-pointer ${
-              activeTab === "cari" ? "text-emerald-400 font-bold" : "text-slate-500 hover:text-slate-300"
-            }`}
-          >
-            {activeTab === "cari" && (
-              <motion.span
-                layoutId="nav-glow-bubble"
-                className="absolute inset-0 bg-emerald-500/10 border border-emerald-500/20 rounded-xl -z-10"
-                transition={{ type: "spring", stiffness: 350, damping: 25 }}
-              />
-            )}
-            <Search size={18} className={activeTab === "cari" ? "scale-110 text-emerald-400" : ""} />
-            <span className="responsive-nav-text uppercase font-semibold whitespace-nowrap">Cari</span>
           </button>
 
           {/* Menu Button: Online (Modrinth) */}
