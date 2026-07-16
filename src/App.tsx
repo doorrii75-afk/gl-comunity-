@@ -13,7 +13,6 @@ import AddonCard from "./components/AddonCard";
 import AddonDetailModal from "./components/AddonDetailModal";
 import AddonUploadForm from "./components/AddonUploadForm";
 import ModrinthExplore from "./components/ModrinthExplore";
-import MCPEDLExplore from "./components/MCPEDLExplore";
 import heavencraftLogo from "./assets/images/heavencraft_logo_1783776928325.jpg";
 
 const WhatsAppIcon = ({ size = 16, className = "" }: { size?: number; className?: string }) => (
@@ -34,8 +33,8 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   
-  // Navigation: "beranda" | "kategori" | "cari" | "tambah" | "modrinth" | "mcpedl"
-  const [activeTab, setActiveTab] = useState<"beranda" | "kategori" | "cari" | "tambah" | "modrinth" | "mcpedl">("beranda");
+  // Navigation: "beranda" | "kategori" | "cari" | "tambah" | "modrinth"
+  const [activeTab, setActiveTab] = useState<"beranda" | "kategori" | "cari" | "tambah" | "modrinth">("beranda");
   
   // Premium Interactive Mouse Light Tracking
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
@@ -820,14 +819,6 @@ export default function App() {
                               Baca Semua
                             </button>
                           )}
-                          <span className="text-slate-800">|</span>
-                          <button
-                            onClick={triggerSimulatedNotification}
-                            className="text-[10px] font-mono text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 transition-colors cursor-pointer"
-                            title="Simulasi notifikasi add-on baru"
-                          >
-                            Simulasi
-                          </button>
                         </div>
                       </div>
 
@@ -1050,20 +1041,20 @@ export default function App() {
         </AnimatePresence>
       </div>
       
-      {/* Database Quota Warning Banner */}
-      {dbStatus?.isFirestoreExhausted && (
+      {/* Database Quota Warning Banner - only visible to verified administrators to keep UI clean and avoid tech-larping/AI-slop for standard users */}
+      {dbStatus?.isFirestoreExhausted && isAdminVerified && (
         <div className="w-full max-w-7xl mx-auto px-4 md:px-8 pt-4">
-          <div className="bg-amber-950/40 border border-amber-500/30 rounded-2xl p-4 flex flex-col md:flex-row items-start gap-4 shadow-xl backdrop-blur-sm">
+          <div className="bg-amber-950/30 border border-amber-500/20 rounded-2xl p-4 flex flex-col md:flex-row items-start gap-4 shadow-xl backdrop-blur-md">
             <div className="p-2.5 bg-amber-500/10 rounded-xl text-amber-400 shrink-0">
-              <AlertCircle size={24} />
+              <AlertCircle size={20} />
             </div>
-            <div className="flex-1 space-y-1">
-              <h4 className="text-sm font-bold text-amber-200">
-                Pemberitahuan Sistem: Mode Fail-safe Lokal Aktif
+            <div className="flex-1 space-y-1 text-left">
+              <h4 className="text-xs font-bold text-amber-300 uppercase tracking-wider font-mono">
+                Sistem Status: Mode Fail-safe Aktif (Firestore Limit)
               </h4>
               <p className="text-xs leading-relaxed text-slate-300">
-                Database Cloud Firestore kami saat ini telah mencapai batas kuota tulis harian gratis (<code className="bg-slate-900 px-1 py-0.5 rounded text-rose-300 font-mono">RESOURCE_EXHAUSTED</code>). 
-                Semua fitur (mendownload, melihat, mengomentari, dan menambah add-on) tetap berjalan <strong>100% normal dan lancar</strong> dengan menggunakan penyimpanan cadangan lokal berkecepatan tinggi! Kuota cloud akan direset otomatis esok hari.
+                Penyimpanan cloud harian Firestore Anda telah mencapai limit Spark Plan gratis. 
+                Sistem secara otomatis mengalihkan penyimpanan ke mode cadangan lokal berkecepatan tinggi agar platform tetap berfungsi secara penuh bagi para pengunjung.
               </p>
               <div className="pt-2 flex flex-wrap items-center gap-4 text-[11px] font-medium">
                 <a
@@ -1072,16 +1063,16 @@ export default function App() {
                   rel="noreferrer"
                   className="text-amber-400 hover:text-amber-300 transition-colors underline decoration-dotted font-mono"
                 >
-                  Buka Console Firebase untuk Upgrade
+                  Buka Console Firebase
                 </a>
-                <span className="text-slate-600 hidden md:inline">•</span>
+                <span className="text-slate-700 hidden md:inline">•</span>
                 <a
                   href="https://firebase.google.com/pricing#cloud-firestore"
                   target="_blank"
                   rel="noreferrer"
                   className="text-slate-400 hover:text-slate-300 transition-colors underline decoration-dotted"
                 >
-                  Detail Harga Firebase (Spark Plan)
+                  Dokumentasi Limit Firebase
                 </a>
               </div>
             </div>
@@ -1466,19 +1457,6 @@ export default function App() {
               </motion.div>
             )}
 
-            {/* TAB 6: MCPEDL (EXPLORE PORTAL) */}
-            {activeTab === "mcpedl" && (
-              <motion.div
-                key="tab-mcpedl"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -15 }}
-                transition={{ duration: 0.25 }}
-              >
-                <MCPEDLExplore />
-              </motion.div>
-            )}
-
 
           </AnimatePresence>
         )}
@@ -1562,25 +1540,6 @@ export default function App() {
             )}
             <Globe size={18} className={activeTab === "modrinth" ? "scale-110 text-emerald-400" : ""} />
             <span className="text-[9px] sm:text-[10px] tracking-wide uppercase font-semibold whitespace-nowrap">Modrinth</span>
-          </button>
-
-          {/* Menu Button: MCPEDL */}
-          <button
-            id="nav-btn-mcpedl"
-            onClick={() => setActiveTab("mcpedl")}
-            className={`relative flex-1 flex flex-col items-center gap-1 py-1.5 px-2 rounded-xl transition-all cursor-pointer ${
-              activeTab === "mcpedl" ? "text-emerald-400 font-bold" : "text-slate-500 hover:text-slate-300"
-            }`}
-          >
-            {activeTab === "mcpedl" && (
-              <motion.span
-                layoutId="nav-glow-bubble"
-                className="absolute inset-0 bg-emerald-500/10 border border-emerald-500/20 rounded-xl -z-10"
-                transition={{ type: "spring", stiffness: 350, damping: 25 }}
-              />
-            )}
-            <Compass size={18} className={activeTab === "mcpedl" ? "scale-110 text-emerald-400" : ""} />
-            <span className="text-[9px] sm:text-[10px] tracking-wide uppercase font-semibold whitespace-nowrap">MCPEDL</span>
           </button>
 
           {/* Menu Button: Tambah */}
