@@ -50,132 +50,7 @@ function generateSvgCoverBase64(title: string, color: string): string {
   return `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
 }
 
-const DEFAULT_ADDONS = [
-  {
-    id: "addon-1",
-    name: "More Ores & Armor Ultimate",
-    description: "Menambahkan lebih dari 15 jenis bijih tambang baru di bawah tanah Minecraft! Mulai dari Ruby, Sapphire, Amethyst, Cobalt, hingga Vibranium kuno. Setiap bijih dapat ditempa menjadi set armor lengkap dan peralatan perang (pedang, kapak, beliung) dengan efek pasif unik seperti ketahanan api, kecepatan gerak, atau penglihatan malam.",
-    category: "Survival",
-    compatibleVersion: "1.21.x - 1.22.x",
-    coverUrl: "/api/addons/addon-1/cover",
-    fileUrl: "/api/addons/addon-1/download",
-    fileName: "more_ores_ultimate.mcaddon",
-    fileSize: "4.2 MB",
-    downloads: 1450,
-    comments: [
-      {
-        id: "c1-1",
-        username: "StevePro",
-        text: "Addon ini keren banget! Akhirnya grinding mining jadi seru lagi karena banyak mineral baru.",
-        createdAt: "2026-07-08T14:30:00Z"
-      },
-      {
-        id: "c1-2",
-        username: "AlexMinecraft",
-        text: "Apakah armor Vibranium benar-benar kebal dari ledakan Creeper? Udah nyoba dan gila kuat banget!",
-        createdAt: "2026-07-09T09:15:00Z"
-      }
-    ],
-    createdAt: "2026-07-01T12:00:00Z",
-    author: "Heaven Craft Admin",
-    color: "#3b82f6",
-    ratingSum: 24,
-    ratingCount: 5
-  },
-  {
-    id: "addon-2",
-    name: "Modern Furniture DecoCraft",
-    description: "Hiasi rumah modern impianmu dengan ratusan furnitur interaktif! Dilengkapi kulkas fungsional yang bisa menyimpan makanan, sofa empuk untuk bersantai, TV LED yang bisa dinyalakan, lampu tidur dengan tingkat kecerahan dinamis, hingga set wastafel and toilet modern. Sangat cocok untuk pemain kreatif maupun survival dekoratif.",
-    category: "Kreatif",
-    compatibleVersion: "1.20.x - 1.21.x",
-    coverUrl: "/api/addons/addon-2/cover",
-    fileUrl: "/api/addons/addon-2/download",
-    fileName: "modern_furniture_deco.mcaddon",
-    fileSize: "8.7 MB",
-    downloads: 2890,
-    comments: [
-      {
-        id: "c2-1",
-        username: "BuilderCraft",
-        text: "Akhirnya bisa bikin ruang tamu yang kelihatan mewah! Sofa birunya mantap.",
-        createdAt: "2026-07-07T11:20:00Z"
-      }
-    ],
-    createdAt: "2026-07-03T10:00:00Z",
-    author: "Heaven Craft Admin",
-    color: "#ec4899",
-    ratingSum: 14,
-    ratingCount: 3
-  },
-  {
-    id: "addon-3",
-    name: "Advanced Super Vehicles Pack",
-    description: "Kendarai kendaraan berkecepatan tinggi di dunia kotak-kokakmu! Paket ini menghadirkan mobil sport mewah, helikopter tempur, sepeda motor trail, jet ski, dan truk tangki air. Semua kendaraan memiliki animasi roda berputar, speedometer di HUD, bagasi penyimpanan terintegrasi, dan membutuhkan bahan bakar batu bara atau bensin.",
-    category: "Transportasi",
-    compatibleVersion: "1.21.x",
-    coverUrl: "/api/addons/addon-3/cover",
-    fileUrl: "/api/addons/addon-3/download",
-    fileName: "super_vehicles_pack.mcaddon",
-    fileSize: "12.4 MB",
-    downloads: 3200,
-    comments: [
-      {
-        id: "c3-1",
-        username: "RacerX",
-        text: "Kecepatan mobil sportnya luar biasa! Tapi helikopternya agak susah dikendalikan di HP.",
-        createdAt: "2026-07-08T18:45:00Z"
-      }
-    ],
-    createdAt: "2026-07-04T08:30:00Z",
-    author: "Heaven Craft Admin",
-    color: "#f59e0b",
-    ratingSum: 19,
-    ratingCount: 4
-  },
-  {
-    id: "addon-4",
-    name: "Fantasy Mythical Creatures",
-    description: "Dunia Minecraft-mu sekarang dihuni oleh makhluk-makhluk mitologi legendaris! Temui naga api di gunung berapi, Pegasus terbang tinggi di langit savana, peri hutan yang ramah di biome bunga, hingga Minotaur raksasa yang menjaga labirin bawah tanah. Beberapa makhluk dapat dijinakkan dan dijadikan tunggangan tempur!",
-    category: "Petualangan",
-    compatibleVersion: "1.20.x - 1.22.x",
-    coverUrl: "/api/addons/addon-4/cover",
-    fileUrl: "/api/addons/addon-4/download",
-    fileName: "mythical_creatures.mcaddon",
-    fileSize: "15.1 MB",
-    downloads: 1980,
-    comments: [],
-    createdAt: "2026-07-05T15:10:00Z",
-    author: "Heaven Craft Admin",
-    color: "#10b981",
-    ratingSum: 18,
-    ratingCount: 4
-  },
-  {
-    id: "addon-5",
-    name: "Waypoints & Dynamic Minimap HUD",
-    description: "Alat navigasi esensial untuk para petualang sejati! Addon ini menambahkan HUD minimap melingkar di sudut layar yang mendeteksi musuh di sekitar secara real-time. Kamu juga bisa membuat kustom waypoint (titik penanda) dengan warna berbeda, dan melakukan teleportasi langsung ke koordinat tersebut melalui menu GUI kompas khusus.",
-    category: "Alat (Tools)",
-    compatibleVersion: "1.19.x - 1.21.x",
-    coverUrl: "/api/addons/addon-5/cover",
-    fileUrl: "/api/addons/addon-5/download",
-    fileName: "waypoints_minimap.mcaddon",
-    fileSize: "1.8 MB",
-    downloads: 4120,
-    comments: [
-      {
-        id: "c5-1",
-        username: "ExplorerNoob",
-        text: "Sangat membantu biar gak tersesat pas nyari Nether Fortress! Fitur teleportasinya juara.",
-        createdAt: "2026-07-09T03:40:00Z"
-      }
-    ],
-    createdAt: "2026-07-06T09:00:00Z",
-    author: "Heaven Craft Admin",
-    color: "#8b5cf6",
-    ratingSum: 10,
-    ratingCount: 2
-  }
-];
+const DEFAULT_ADDONS: any[] = [];
 
 const LOCAL_DB_PATH = path.join(process.cwd(), "addons_local.json");
 
@@ -327,39 +202,48 @@ async function checkFirestoreQuotaProactively() {
   }
 }
 
-async function seedDatabaseIfEmpty() {
+async function cleanupDummyAddons() {
+  const dummyIds = ["addon-1", "addon-2", "addon-3", "addon-4", "addon-5"];
+  
+  // 1. Remove from local addons cache
+  let localModified = false;
+  for (const id of dummyIds) {
+    if (localAddons[id]) {
+      delete localAddons[id];
+      localModified = true;
+      console.log(`Removed dummy addon from local cache: ${id}`);
+    }
+  }
+  if (localModified) {
+    saveLocalDb();
+  }
+
+  // 2. Remove from Firestore if active
   if (!db || isFirestoreExhausted) return;
   try {
-    for (const item of DEFAULT_ADDONS) {
-      if (isFirestoreExhausted) break;
-      const docRef = doc(db, "addons", item.id);
+    console.log("Starting Firestore dummy addon cleanup...");
+    for (const id of dummyIds) {
+      const docRef = doc(db, "addons", id);
       const docSnap = await getDoc(docRef);
-
-      if (!docSnap.exists()) {
-        console.log(`Seeding metadata for missing addon: ${item.name}`);
-        const coverBase64 = generateSvgCoverBase64(item.name, item.color);
-        const { color, ...addonData } = item;
-        await setDoc(docRef, {
-          ...addonData,
-          coverBase64
-        });
-      }
-
-      const chunkRef = doc(db, "addons", item.id, "chunks", "chunk-0");
-      const chunkSnap = await getDoc(chunkRef);
-      if (!chunkSnap.exists()) {
-        console.log(`Seeding missing file chunk for addon: ${item.name}`);
-        const dummyData = `// GL COM Minecraft Add-on File\n// Name: ${item.name}\n// Direct download without ads!\n// ID: ${item.id}`;
-        await setDoc(chunkRef, {
-          index: 0,
-          data: Buffer.from(dummyData).toString("base64")
-        });
+      
+      if (docSnap.exists()) {
+        console.log(`Found dummy addon in Firestore: ${id}. Deleting...`);
+        
+        // Delete all chunks first
+        const chunksRef = collection(db, "addons", id, "chunks");
+        const chunksSnap = await getDocs(chunksRef);
+        const deletePromises = chunksSnap.docs.map((chunkDoc) => deleteDoc(chunkDoc.ref));
+        await Promise.all(deletePromises);
+        
+        // Delete parent metadata document
+        await deleteDoc(docRef);
+        console.log(`Successfully deleted dummy addon ${id} from Firestore.`);
       }
     }
-    console.log("Database seed validation and repair completed.");
+    console.log("Firestore dummy addon cleanup completed.");
   } catch (err: any) {
     checkFirestoreError(err);
-    console.warn("Gagal seeding database Firestore (kemungkinan besar karena batas kuota):", err.message);
+    console.warn("Failed to cleanup dummy addons from Firestore:", err.message);
   }
 }
 
@@ -372,7 +256,7 @@ if (fs.existsSync(firebaseConfigPath)) {
     
     // Proactively check if write quota is active or exhausted before seeding
     checkFirestoreQuotaProactively().then(() => {
-      seedDatabaseIfEmpty();
+      cleanupDummyAddons();
     });
   } catch (err: any) {
     console.error("Error initializing Firebase:", err.message);

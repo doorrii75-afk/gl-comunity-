@@ -181,3 +181,28 @@ html, body, #root {
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
 }
+
+/* Premium micro responsive typography for navigation labels to prevent line/border overflow on any device width */
+.responsive-nav-text {
+  font-size: 7.5px;
+  letter-spacing: 0.02em;
+}
+@media (min-width: 360px) {
+  .responsive-nav-text {
+    font-size: 8px;
+    letter-spacing: 0.025em;
+  }
+}
+@media (min-width: 400px) {
+  .responsive-nav-text {
+    font-size: 9px;
+    letter-spacing: 0.03em;
+  }
+}
+@media (min-width: 640px) {
+  .responsive-nav-text {
+    font-size: 10px;
+    letter-spacing: 0.05em;
+  }
+}
+

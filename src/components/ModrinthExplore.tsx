@@ -296,8 +296,8 @@ export default function ModrinthExplore() {
       {/* Modern Filter Controls Suite */}
       <div className="glass-premium border border-slate-900/60 rounded-2xl p-4 flex flex-col gap-4 backdrop-blur-md">
         {/* Project Type Filter Pills (Desktop & Tablet Scrollable) */}
-        <div className="flex items-center justify-between gap-4 border-b border-slate-900/80 pb-3 overflow-x-auto no-scrollbar">
-          <div className="flex items-center gap-2 shrink-0">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-900/80 pb-3">
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full md:w-auto pb-1 md:pb-0">
             {PROJECT_TYPES.map((type) => {
               const Icon = type.icon;
               const isSelected = selectedProjectType === type.id;
@@ -319,7 +319,7 @@ export default function ModrinthExplore() {
           </div>
 
           {/* Sort selection & Mobile filters toggler */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center justify-between md:justify-end gap-2 w-full md:w-auto">
             {/* Sort Dropdown */}
             <div className="relative">
               <button

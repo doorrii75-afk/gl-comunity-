@@ -1463,14 +1463,14 @@ export default function App() {
       </main>
 
       {/* Floating Bottom Menu Glassmorphism Navigation Dock (Mobile-First / Super Modern) */}
-      <nav id="floating-bottom-nav" className="fixed bottom-4 left-1/2 -translate-x-1/2 z-45 w-[94%] max-w-xl bg-slate-950/40 backdrop-blur-2xl border border-white/10 rounded-3xl px-3 py-2.5 shadow-[0_12px_40px_rgba(0,0,0,0.8)] shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]">
-        <div className="flex items-center justify-between relative gap-1">
+      <nav id="floating-bottom-nav" className="fixed bottom-4 left-1/2 -translate-x-1/2 z-45 w-[94%] max-w-xl bg-slate-950/40 backdrop-blur-2xl border border-white/10 rounded-3xl px-1.5 py-2 sm:px-3 sm:py-2.5 shadow-[0_12px_40px_rgba(0,0,0,0.8)] shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]">
+        <div className="flex items-center justify-between relative gap-0.5 sm:gap-1.5">
           
           {/* Menu Button: Beranda */}
           <button
             id="nav-btn-beranda"
             onClick={() => { setActiveTab("beranda"); setSelectedCategory("Semua"); }}
-            className={`relative flex-1 flex flex-col items-center gap-1 py-1.5 px-2 rounded-xl transition-all cursor-pointer ${
+            className={`relative flex-1 flex flex-col items-center gap-1 py-1.5 px-0.5 sm:px-2 rounded-xl transition-all cursor-pointer ${
               activeTab === "beranda" ? "text-emerald-400 font-bold" : "text-slate-500 hover:text-slate-300"
             }`}
           >
@@ -1482,14 +1482,14 @@ export default function App() {
               />
             )}
             <Home size={18} className={activeTab === "beranda" ? "scale-110 text-emerald-400" : ""} />
-            <span className="text-[9px] sm:text-[10px] tracking-wide uppercase font-semibold whitespace-nowrap">Beranda</span>
+            <span className="responsive-nav-text uppercase font-semibold whitespace-nowrap">Beranda</span>
           </button>
 
           {/* Menu Button: Kategori */}
           <button
             id="nav-btn-kategori"
             onClick={() => setActiveTab("kategori")}
-            className={`relative flex-1 flex flex-col items-center gap-1 py-1.5 px-2 rounded-xl transition-all cursor-pointer ${
+            className={`relative flex-1 flex flex-col items-center gap-1 py-1.5 px-0.5 sm:px-2 rounded-xl transition-all cursor-pointer ${
               activeTab === "kategori" ? "text-emerald-400 font-bold" : "text-slate-500 hover:text-slate-300"
             }`}
           >
@@ -1501,14 +1501,14 @@ export default function App() {
               />
             )}
             <FolderHeart size={18} className={activeTab === "kategori" ? "scale-110 text-emerald-400" : ""} />
-            <span className="text-[9px] sm:text-[10px] tracking-wide uppercase font-semibold whitespace-nowrap">Kategori</span>
+            <span className="responsive-nav-text uppercase font-semibold whitespace-nowrap">Kategori</span>
           </button>
 
           {/* Menu Button: Cari */}
           <button
             id="nav-btn-cari"
             onClick={() => setActiveTab("cari")}
-            className={`relative flex-1 flex flex-col items-center gap-1 py-1.5 px-2 rounded-xl transition-all cursor-pointer ${
+            className={`relative flex-1 flex flex-col items-center gap-1 py-1.5 px-0.5 sm:px-2 rounded-xl transition-all cursor-pointer ${
               activeTab === "cari" ? "text-emerald-400 font-bold" : "text-slate-500 hover:text-slate-300"
             }`}
           >
@@ -1520,14 +1520,14 @@ export default function App() {
               />
             )}
             <Search size={18} className={activeTab === "cari" ? "scale-110 text-emerald-400" : ""} />
-            <span className="text-[9px] sm:text-[10px] tracking-wide uppercase font-semibold whitespace-nowrap">Cari</span>
+            <span className="responsive-nav-text uppercase font-semibold whitespace-nowrap">Cari</span>
           </button>
 
           {/* Menu Button: Online (Modrinth) */}
           <button
             id="nav-btn-modrinth"
             onClick={() => setActiveTab("modrinth")}
-            className={`relative flex-1 flex flex-col items-center gap-1 py-1.5 px-2 rounded-xl transition-all cursor-pointer ${
+            className={`relative flex-1 flex flex-col items-center gap-1 py-1.5 px-0.5 sm:px-2 rounded-xl transition-all cursor-pointer ${
               activeTab === "modrinth" ? "text-emerald-400 font-bold" : "text-slate-500 hover:text-slate-300"
             }`}
           >
@@ -1539,14 +1539,14 @@ export default function App() {
               />
             )}
             <Globe size={18} className={activeTab === "modrinth" ? "scale-110 text-emerald-400" : ""} />
-            <span className="text-[9px] sm:text-[10px] tracking-wide uppercase font-semibold whitespace-nowrap">Modrinth</span>
+            <span className="responsive-nav-text uppercase font-semibold whitespace-nowrap">Modrinth</span>
           </button>
 
           {/* Menu Button: Tambah */}
           <button
             id="nav-btn-tambah"
             onClick={() => setActiveTab("tambah")}
-            className={`relative flex-1 flex flex-col items-center gap-1 py-1.5 px-2 rounded-xl transition-all cursor-pointer ${
+            className={`relative flex-1 flex flex-col items-center gap-1 py-1.5 px-0.5 sm:px-2 rounded-xl transition-all cursor-pointer ${
               activeTab === "tambah" ? "text-emerald-400 font-bold" : "text-slate-500 hover:text-slate-300"
             }`}
           >
@@ -1558,7 +1558,7 @@ export default function App() {
               />
             )}
             <PlusCircle size={18} className={activeTab === "tambah" ? "scale-110 text-emerald-400" : ""} />
-            <span className="text-[9px] sm:text-[10px] tracking-wide uppercase font-semibold whitespace-nowrap">Tambah</span>
+            <span className="responsive-nav-text uppercase font-semibold whitespace-nowrap">Tambah</span>
           </button>
 
         </div>
