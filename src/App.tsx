@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Home, FolderHeart, Search, PlusCircle, Compass, Gamepad2, Sparkles, Sliders, ChevronRight, Download, Eye, AlertCircle, Lock, KeyRound, ShieldAlert, Globe, Bell, Trash2, Check, CheckCheck, X } from "lucide-react";
+import { Home, FolderHeart, Search, PlusCircle, Compass, Gamepad2, Sparkles, Sliders, ChevronRight, Download, Eye, AlertCircle, Lock, KeyRound, ShieldAlert, Globe, Bell, Trash2, Check, CheckCheck, X, Sun, Moon } from "lucide-react";
 
 import { Addon, Comment } from "./types";
 import AddonSlider from "./components/AddonSlider";
@@ -32,6 +32,22 @@ export default function App() {
   const [addons, setAddons] = useState<Addon[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  
+  // Theme State: "dark" | "light"
+  const [theme, setTheme] = useState<"dark" | "light">(() => {
+    const saved = localStorage.getItem("hc-theme");
+    return (saved as "dark" | "light") || "dark";
+  });
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === "light") {
+      root.classList.add("light");
+    } else {
+      root.classList.remove("light");
+    }
+    localStorage.setItem("hc-theme", theme);
+  }, [theme]);
   
   // Navigation: "beranda" | "kategori" | "cari" | "tambah" | "modrinth"
   const [activeTab, setActiveTab] = useState<"beranda" | "kategori" | "cari" | "tambah" | "modrinth">("beranda");
@@ -746,6 +762,17 @@ export default function App() {
               </div>
               <span className="hidden sm:inline">Saluran WA</span>
             </motion.a>
+
+            {/* Theme Toggle Button */}
+            <motion.button
+              onClick={() => setTheme((prev) => (prev === "dark" ? "light" : "dark"))}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="p-2.5 rounded-xl border bg-slate-900 hover:bg-slate-850 border-slate-800 text-slate-400 hover:text-emerald-400 transition-all cursor-pointer flex items-center justify-center"
+              title={theme === "dark" ? "Aktifkan Mode Terang" : "Aktifkan Mode Gelap"}
+            >
+              {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+            </motion.button>
 
             {/* Notification Panel Control */}
             <div className="relative">
