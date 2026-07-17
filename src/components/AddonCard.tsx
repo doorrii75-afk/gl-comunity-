@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from "react";
-import { motion } from "motion/react";
-import { Download, MessageSquare, Tag, Eye, Star } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import { Download, MessageSquare, Tag, Eye, Star, Check, AlertCircle } from "lucide-react";
 import { Addon } from "../types";
 import { use3DTilt } from "../hooks/use3DTilt";
 
@@ -27,6 +27,49 @@ export default function AddonCard({ addon, onOpenDetails, onDownload }: AddonCar
     handleMouseLeave,
     maxGlare,
   } = use3DTilt(10, 0.15);
+
+  const [downloadStatus, setDownloadStatus] = useState<"idle" | "downloading" | "completed" | "error">("idle");
+  const [downloadProgress, setDownloadProgress] = useState(0);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (downloadStatus === "downloading") {
+      setDownloadProgress(10);
+      interval = setInterval(() => {
+        setDownloadProgress((prev) => {
+          if (prev >= 90) {
+            return prev + (95 - prev) * 0.08;
+          }
+          return prev + (90 - prev) * 0.12;
+        });
+      }, 120);
+    } else if (downloadStatus === "completed") {
+      setDownloadProgress(100);
+    } else if (downloadStatus === "idle") {
+      setDownloadProgress(0);
+    }
+    return () => clearInterval(interval);
+  }, [downloadStatus]);
+
+  const handleDirectDownload = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (downloadStatus !== "idle") return;
+
+    setDownloadStatus("downloading");
+    try {
+      await onDownload(addon);
+      setDownloadStatus("completed");
+      setTimeout(() => {
+        setDownloadStatus("idle");
+      }, 1600);
+    } catch (err) {
+      console.error(err);
+      setDownloadStatus("error");
+      setTimeout(() => {
+        setDownloadStatus("idle");
+      }, 2000);
+    }
+  };
 
   return (
     <motion.div
@@ -164,28 +207,71 @@ export default function AddonCard({ addon, onOpenDetails, onDownload }: AddonCar
             >
               <Eye size={14} />
             </button>
-            <button
+            <motion.button
               id={`card-direct-download-${addon.id}`}
-              onClick={async (e) => {
-                e.stopPropagation();
-                const target = e.currentTarget;
-                target.disabled = true;
-                const originalContent = target.innerHTML;
-                target.innerHTML = `<span class="animate-pulse">Loading...</span>`;
-                try {
-                  await onDownload(addon);
-                } catch (err) {
-                  console.error(err);
-                } finally {
-                  target.disabled = false;
-                  target.innerHTML = originalContent;
+              onClick={handleDirectDownload}
+              disabled={downloadStatus !== "idle"}
+              animate={downloadStatus === "downloading" ? {
+                boxShadow: [
+                  "0 0 0 0px rgba(16, 185, 129, 0.4)",
+                  "0 0 0 10px rgba(16, 185, 129, 0)"
+                ],
+                transition: {
+                  repeat: Infinity,
+                  duration: 1.2,
+                  ease: "easeOut"
                 }
-              }}
-              className="inline-flex items-center gap-1.5 bg-emerald-500/10 hover:bg-emerald-500 border border-emerald-500/20 hover:border-emerald-500 text-emerald-400 hover:text-slate-950 font-bold text-xs px-3 py-1.5 rounded-lg transition-all active:scale-95 cursor-pointer text-center select-none"
+              } : {}}
+              className={`inline-flex items-center gap-1.5 font-bold text-xs px-3.5 py-1.5 rounded-lg transition-all active:scale-95 text-center select-none cursor-pointer relative ${
+                downloadStatus === "downloading"
+                  ? "bg-emerald-500/25 border border-emerald-400/40 text-emerald-300 pointer-events-none"
+                  : downloadStatus === "completed"
+                  ? "bg-emerald-500 border border-emerald-500 text-slate-950 pointer-events-none"
+                  : downloadStatus === "error"
+                  ? "bg-rose-500/20 border border-rose-500/40 text-rose-400 pointer-events-none"
+                  : "bg-emerald-500/10 hover:bg-emerald-500 border border-emerald-500/20 hover:border-emerald-500 text-emerald-400 hover:text-slate-950"
+              }`}
             >
-              <Download size={12} />
-              Unduh
-            </button>
+              {downloadStatus === "downloading" ? (
+                <>
+                  <svg className="w-3.5 h-3.5 shrink-0 -rotate-90" viewBox="0 0 20 20">
+                    <circle
+                      cx="10"
+                      cy="10"
+                      r="7.5"
+                      className="stroke-emerald-500/20 fill-none"
+                      strokeWidth="2.5"
+                    />
+                    <circle
+                      cx="10"
+                      cy="10"
+                      r="7.5"
+                      className="stroke-emerald-400 fill-none transition-all duration-150 ease-out"
+                      strokeWidth="2.5"
+                      strokeDasharray={47.12}
+                      strokeDashoffset={47.12 - (47.12 * downloadProgress) / 100}
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  <span>{Math.round(downloadProgress)}%</span>
+                </>
+              ) : downloadStatus === "completed" ? (
+                <>
+                  <Check size={12} className="stroke-[3]" />
+                  <span>Selesai</span>
+                </>
+              ) : downloadStatus === "error" ? (
+                <>
+                  <AlertCircle size={12} />
+                  <span>Gagal</span>
+                </>
+              ) : (
+                <>
+                  <Download size={12} />
+                  <span>Unduh</span>
+                </>
+              )}
+            </motion.button>
           </div>
         </div>
       </div>
